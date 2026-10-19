@@ -1,19 +1,24 @@
 # Отчёт о тестировании
 
-Результаты юнит-тестов CfUnit (coUnit 1.2.0.0) в CODESYS Control Win V3 и проверок без CODESYS.
-Запись «проверено в CODESYS» появляется только после реального прогона. Раздел «Последний прогон
-в CODESYS» обновляет `python tools/codesys/cds.py report` по итогам `cds.py test`
-(`build/test-results.json`); правки внутри него вручную перезаписываются.
+> **Внимание.** Код демонстрационный и не предназначен для систем безопасности. Реальная ПАЗ
+> требует определения SIL, сертифицированных аппаратных и программных средств и валидации по
+> ГОСТ Р МЭК 61511.
+
+Результаты тестов coUnit (CfUnit 1.2.0.0) в CODESYS Control Win V3, сборки и проверок без CODESYS.
+«Проверено в CODESYS» пишется только после реального прогона. Раздел «Последний прогон в CODESYS»
+обновляет `python tools/codesys/cds.py report` по итогам `cds.py test` (`build/test-results.json`);
+правки внутри него вручную перезаписываются. Те же результаты по шагам протокола испытаний —
+[FAT_REPORT.md](FAT_REPORT.md) (`python -m cemgen fat-report`).
 
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-16 07:14:13. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-16 20:19:18. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-16 07:14:13 |
-| Коммит | 63edb70-dirty |
+| Дата прогона | 2026-10-16 20:19:18 |
+| Коммит | da7d086-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -23,32 +28,268 @@
 
 | Набор | Тестов | Пройдено | Упало | Пропущено | Итог |
 |---|---|---|---|---|---|
-| `PRG_Tests.fbF_ClampTest` | 7 | 7 | 0 | 0 | пройдено |
-| `PRG_Tests.fbExampleTest` | 11 | 11 | 0 | 0 | пройдено |
-| **Всего** | 18 | 18 | 0 | 0 | **пройдено** |
+| `GVL_TestsSis.fbVoteEvalTest` | 7 | 7 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbVotingTest` | 27 | 27 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbCauseEffectTest` | 37 | 37 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbSisEventLogTest` | 6 | 6 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbSisUnitTest` | 5 | 5 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbSisUtilTest` | 9 | 9 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbCommonTest` | 4 | 4 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | 12 | 12 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3VTDITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3VTAITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DSDITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DSAITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DADITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DAAITest` | 1 | 1 | 0 | 0 | пройдено |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | 18 | 18 | 0 | 0 | пройдено |
+| `GVL_TestsGenerated.fbVoteTruthTest` | 36 | 36 | 0 | 0 | пройдено |
+| `GVL_TestsGenerated.fbCemGen01Test` | 40 | 40 | 0 | 0 | пройдено |
+| `GVL_TestsGenerated.fbCemGen02Test` | 31 | 31 | 0 | 0 | пройдено |
+| **Всего** | 238 | 238 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
 | Набор | Тест | Итог |
 |---|---|---|
-| `PRG_Tests.fbF_ClampTest` | `InsideRangeReturnsValue` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `BelowLowReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AboveHighReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtLowBoundaryReturnsLow` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `AtHighBoundaryReturnsHigh` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `EqualBoundsReturnsBound` | пройден |
-| `PRG_Tests.fbF_ClampTest` | `LowGreaterThanHighSwapsBounds` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoSwitchesOnBelowThreshold` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoThresholdsAreInclusive` | пройден |
-| `PRG_Tests.fbExampleTest` | `AutoHoldsStateInsideHysteresis` | пройден |
-| `PRG_Tests.fbExampleTest` | `InvalidValueLatchesFault` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeClearsFaultWhenValid` | пройден |
-| `PRG_Tests.fbExampleTest` | `AcknowledgeKeepsFaultWhileInvalid` | пройден |
-| `PRG_Tests.fbExampleTest` | `ManualFollowsCommand` | пройден |
-| `PRG_Tests.fbExampleTest` | `LocalAndOutOfServiceSwitchOff` | пройден |
-| `PRG_Tests.fbExampleTest` | `DefaultModeIsOutOfService` | пройден |
-| `PRG_Tests.fbExampleTest` | `ParametersAreClamped` | пройден |
-| `PRG_Tests.fbExampleTest` | `CountsSwitchOnsAndResetClears` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_ArchNone_TripsReportsNone` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_PolicyOutOfEnum_TripsNone` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_NotUsedInsideN_CountsInvalid` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_ArchHelpers_ChannelsAndRequired` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_TwoOfThree_TripsOnSecondDemand` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_ChannelsBeyondN_Ignored` | пройден |
+| `GVL_TestsSis.fbVoteEvalTest` | `Vote_Counters_ReportStates` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_DefaultCfg_TripsCfgError` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_AnalogHigh_InclusiveAtLimit` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_AnalogLow_InclusiveAtLimit` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Hysteresis_ReleasesBeyondBand` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_AnalogNaN_Invalid` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_AnalogInf_Invalid` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_DiHealthyFalse_InvertsDemand` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_ChannelValidity_EventsOnChange` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_ExpiresExactlyAtMax` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_RemainCountsDown` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_LimitLowestChannelWins` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_DeniedWithoutPermit` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_PermitLostEnds` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_ReRequestNeedsRelease` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_ZeroTimeDenied` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Bypass_EventsWithChannel` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Discrepancy_AfterDelayExactly` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Discrepancy_AtLimitNoAlarm` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Discrepancy_IgnoresBypassedAndInvalid` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Discrepancy_ZeroDisables` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_Discrepancy_NoTripImpact` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_CfgError_RemovesBypasses` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_UnusedChannels_Ignored` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_TimeBackwards_BypassEnds` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_NoTimeSource_UsesSystemTime` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_CfgCheck_DetectsEachRule` | пройден |
+| `GVL_TestsSis.fbVotingTest` | `Voting_DegradeAvailable_TwoOfThreeAsTwoOfTwo` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_DefaultCfg_AllTripped` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_CrcMismatch_AllTripped` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_MaskBeyondCount_CfgError` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_CfgErrorRecovered_NeedsReset` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_StartTripped_RequiresReset` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_StartNotTripped_EnergizedFirstCall` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_ShortPulse_NoTrip` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_ZeroDelay_SameCall` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Latch_HeldAfterClear` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Reset_DeniedWhilePresent` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Reset_DeniedWhilePending` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Reset_AllowedWhenOverridden` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_ResetHw_EdgeOnly` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_ResetHw_HeldAtStartIgnored` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_FirstOut_RecordsEarliest` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_FirstOut_SimultaneousLowestAndMask` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_FirstOut_TimestampFromSource` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_FirstOut_ClearedByReset` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ExpiresExactly` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_DeniedNotAllowed` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_DeniedWithoutPermit` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_CancelRestoresTrip` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_RepeatIgnored` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_StartupMaskAllowedOnly` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_DelayRunsDuringOverride` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_DisabledCause_NeverTrips` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_UnusedEffects_Deenergized` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_CmdBits_Cleared` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Events_OrderInCall` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_EffectTripEvent_CarriesCause` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_CfgCheck_DetectsEachRule` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_TimeBackwards_PendingDelayTrips` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_TimeBackwards_OverrideEnds` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ReRequestAfterExpiryFullTime` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_CancelAndRequestRestarts` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_NoTimeSource_UsesSystemTime` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_Ring_OverwritesOldest` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_Seq_IncrementsAndWraps` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_GetEventBeyondCount_Empty` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_Clear_KeepsSeq` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_SizeOfEvent_Is24` | пройден |
+| `GVL_TestsSis.fbSisEventLogTest` | `Log_ViaInterface_KeepsFields` | пройден |
+| `GVL_TestsSis.fbSisUnitTest` | `Unit_ExternalCause_UsesExtDemand` | пройден |
+| `GVL_TestsSis.fbSisUnitTest` | `Unit_DisabledCause_VotingNotCalled` | пройден |
+| `GVL_TestsSis.fbSisUnitTest` | `Unit_VotingCfgError_TripsOnlyThatCause` | пройден |
+| `GVL_TestsSis.fbSisUnitTest` | `Unit_TimeSource_PassedToChildren` | пройден |
+| `GVL_TestsSis.fbSisUnitTest` | `Unit_Events_VotingBeforeCem` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_Crc16_CheckValue` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_CemCrc_DemoMatrixValue` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_Bit_OutOfRangeFalse` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_BitMask_OutOfRangeZero` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_LowMask_Bounds` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_FirstBit_LowestIndex` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_Ne43Valid_Limits` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_AiToEu_Scale` | пройден |
+| `GVL_TestsSis.fbSisUtilTest` | `Sis_LogEvent_NoSinkReturnsFalse` | пройден |
+| `GVL_TestsSis.fbCommonTest` | `Common_SizeLimits_MasksFitWord` | пройден |
+| `GVL_TestsSis.fbCommonTest` | `Common_DefaultCfg_FailsSafe` | пройден |
+| `GVL_TestsSis.fbCommonTest` | `Common_EnumCodes_MatchContract` | пройден |
+| `GVL_TestsSis.fbCommonTest` | `Common_DefaultSts_FailSafe` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo1VT_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo1DS_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo1DA_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo2VT_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo2DS_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval1oo2DA_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo2VT_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo2DS_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo2DA_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo3VT_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo3DS_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableEvalTest` | `VoteTable_Eval2oo3DA_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3VTDITest` | `VoteTable_Fb2oo3VTDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3VTAITest` | `VoteTable_Fb2oo3VTAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DSDITest` | `VoteTable_Fb2oo3DSDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DSAITest` | `VoteTable_Fb2oo3DSAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DADITest` | `VoteTable_Fb2oo3DADI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTable2oo3DAAITest` | `VoteTable_Fb2oo3DAAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1VTDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1VTAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1DSDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1DSAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1DADI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo1DAAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2VTDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2VTAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2DSDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2DSAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2DADI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb1oo2DAAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2VTDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2VTAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2DSDI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2DSAI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2DADI_MatchesModel` | пройден |
+| `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | `VoteTable_Fb2oo2DAAI_MatchesModel` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo1VT_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo1DS_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo1DA_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo2VT_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo2DS_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval1oo2DA_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo2VT_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo2DS_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo2DA_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo3VT_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo3DS_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Eval2oo3DA_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1VTDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1VTAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1DSDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1DSAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1DADI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo1DAAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2VTDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2VTAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2DSDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2DSAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2DADI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb1oo2DAAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2VTDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2VTAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2DSDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2DSAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2DADI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo2DAAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3VTDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3VTAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3DSDI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3DSAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3DADI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbVoteTruthTest` | `VoteTruth_Fb2oo3DAAI_MatchesTable` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSHH101Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSHH102Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Bypass_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109Delay_TripsExactlyAtDelay` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ESL109Bypass_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutPSHH101ThenPSLL101_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutPSLL101ThenLSHH102_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutLSHH102ThenLSLL102_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutLSLL102ThenTSHH103_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutTSHH103ThenASHH104_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutASHH104ThenBSH105_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutBSH105ThenHS106_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutHS106ThenPSLL108_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutPSLL108ThenESL109_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutESL109ThenPSHH101_RecordsFirst` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_Start_TrippedUntilReset` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutSimultaneous_LowestIndex` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_GeneratedCfg_PassesChecks` | пройден |
 
 ### Упавшие тесты
 
@@ -59,58 +300,53 @@ _Нет._
 
 ## Сборка и полная проверка компиляции в CODESYS
 
-CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 2026-10-16. `build` компилирует
-объекты, достижимые из задач; `check` — все объекты раскладки (docs/MANUAL_STEPS.md, раздел 5).
+CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 16.10.2026, после интеграции кода
+логики ПАЗ и сгенерированного по матрице и после исправлений ревизии функциональной безопасности
+([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-11). `build` компилирует объекты, достижимые из задач; `check` —
+все объекты раскладки ([MANUAL_STEPS.md](MANUAL_STEPS.md), раздел 5). Библиотеки проекта:
+`#Standard` (Standard 3.5.17.0), plc-process-lib 0.1.0.0 (`plc-process-lib, * (plc-portfolio)`,
+собрана `cds.py` из соседнего репозитория, коммит `20d9528`), в тестовом проекте — coUnit 1.2.0.0;
+плейсхолдеры устройства `#IoStandard`, `#3SLicense`, `#CAA Device Diagnosis`, `#BreakpointLogging`.
 
 | Команда | Итог | Примечание |
 |---|---|---|
-| `cds.py build` | 0 ошибок, 0 предупреждений | ссылки проекта: `#Standard` из `config.json` и плейсхолдеры устройства (`#IoStandard`, `#3SLicense`, `#CAA Device Diagnosis`, `#BreakpointLogging`); повторный импорт — 0 изменений |
-| `cds.py check` | 0 ошибок, 0 предупреждений | 8 объектов `src/` (включая `PRG_Main`) |
-| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 11 объектов `src/` и `tests/` |
-| `cds.py test` | 18 из 18 | раздел выше |
-| `cds.py roundtrip` | без диффа (60 файлов), повторный импорт — 0 изменений | — |
-| `cds.py library` | 0 ошибок проверки пула | 7 объектов, ссылка библиотеки — `#Standard` |
-
-Проверка самой команды `check` на копии шаблона (вне репозитория): программа без задачи с
-`iX := diZ;`, ФБ без экземпляра с ошибкой в методе, неиспользуемый DUT, вспомогательный ФБ в
-`tests/` с ошибкой — `build` «0 ошибок» (код 0), `check` / `check --tests` — каждая ошибка с файлом
-и строкой раскладки (код 1); после удаления — код 0. GVL с типами библиотек устройства
-(`IoStandard.IoConfigConnector`, `DED.DEVICE_STATE`): `build` и `check` — 0 ошибок (ссылки
-устройства копируются в пул проверки). Standard в той же копии (TON, R_TRIG, CTU, CONCAT без
-пространства имён и с `Standard.`): `build`, `check --tests`, `library` — 0 ошибок, `test` — 19 из
-19; без ссылки `standard` — C0077 «Неизвестный тип: 'TON'» (docs/ASSUMPTIONS.md, D37–D39).
+| `cds.py build` | 0 ошибок, 0 предупреждений | рабочий проект: MainTask 20 мс → `PRG_Main` → `PRG_Sis` |
+| `cds.py build --tests` | 0 ошибок, 0 предупреждений | тестовый проект: TestTask 10 мс → `PRG_Tests`; код 1,39 МБ, глобальные данные 154 МБ |
+| `cds.py check` | 0 ошибок, 0 предупреждений | 50 объектов `src/` (включая `PRG_Main`) |
+| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 80 объектов `src/` и `tests/` |
+| `cds.py test` | 238 из 238 | раздел выше; все наборы завершились к первому опросу. До исправлений ревизии новые тесты R-01, R-02 упали — 5 из 238 (тесты сначала) |
+| `cds.py roundtrip` | без диффа (711 файлов), повторный импорт — 0 изменений | импорт в чистый проект → экспорт → побайтное сравнение |
+| `cemgen fat-report` | 55 шагов из 55 «соответствует» | [FAT_REPORT.md](FAT_REPORT.md) по `build/test-results.json` этого прогона |
+| мутации (копия репозитория) | @MUT@ | 10 ошибок в `FB_Voting` и `FB_CauseEffect` по одной, `cds.py test` копии ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-08) |
+| `cds.py deps --check` | есть | plc-process-lib 0.1.0.0, собрана из `../plc-process-lib` @ `20d9528` |
 
 ## Что проверяют тесты
 
-| Набор | Тест | Что проверяет |
-|---|---|---|
-| `FB_F_Clamp_Test` | `InsideRangeReturnsValue` | значение внутри диапазона не меняется |
-| `FB_F_Clamp_Test` | `BelowLowReturnsLow` | значение ниже диапазона → нижняя граница |
-| `FB_F_Clamp_Test` | `AboveHighReturnsHigh` | значение выше диапазона → верхняя граница |
-| `FB_F_Clamp_Test` | `AtLowBoundaryReturnsLow` | значение на нижней границе не меняется |
-| `FB_F_Clamp_Test` | `AtHighBoundaryReturnsHigh` | значение на верхней границе не меняется |
-| `FB_F_Clamp_Test` | `EqualBoundsReturnsBound` | вырожденный диапазон `rLow = rHigh` |
-| `FB_F_Clamp_Test` | `LowGreaterThanHighSwapsBounds` | `rLow > rHigh`: границы меняются местами |
-| `FB_Example_Test` | `AutoSwitchesOnBelowThreshold` | авторежим: значение ниже порога включения (уставка − гистерезис) включает выход, отказа нет |
-| `FB_Example_Test` | `AutoThresholdsAreInclusive` | авторежим: на пороге включения выход включается, на уставке — отключается |
-| `FB_Example_Test` | `AutoHoldsStateInsideHysteresis` | авторежим: в зоне гистерезиса выход сохраняет состояние (после включения и после отключения) |
-| `FB_Example_Test` | `InvalidValueLatchesFault` | недостоверное измерение в авторежиме: отказ, выход отключён; отказ держится после восстановления измерения |
-| `FB_Example_Test` | `AcknowledgeClearsFaultWhenValid` | `Acknowledge()` при достоверном измерении снимает отказ и возвращает TRUE, выход снова управляется |
-| `FB_Example_Test` | `AcknowledgeKeepsFaultWhileInvalid` | `Acknowledge()` при недостоверном измерении возвращает FALSE, отказ остаётся |
-| `FB_Example_Test` | `ManualFollowsCommand` | ручной режим: выход повторяет `xManualOn`, недостоверное измерение отказа не даёт |
-| `FB_Example_Test` | `LocalAndOutOfServiceSwitchOff` | `Local` и `OutOfService` отключают выход при любых измерении и команде |
-| `FB_Example_Test` | `DefaultModeIsOutOfService` | режим по умолчанию — `OutOfService`: выход отключён |
-| `FB_Example_Test` | `ParametersAreClamped` | уставка и гистерезис вне диапазона ограничиваются `EXAMPLE_SP_MAX_PCT` и `EXAMPLE_HYST_MIN_PCT` |
-| `FB_Example_Test` | `CountsSwitchOnsAndResetClears` | счётчик `Count` считает только фронты включения; `Reset()` через `I_Resettable` отключает выход и обнуляет счётчик |
+| Набор | Тестов | Что проверяет |
+|---|---:|---|
+| `FB_VoteEval_Test` | 7 | `F_VoteEval`: схема вне перечисления и `None` — срабатывание; политика вне перечисления; `NotUsed` внутри N — недостоверен; 2oo3 срабатывает на втором требовании; каналы за пределами N не действуют; счётчики состояний; функции схем (N, M) |
+| `FB_Voting_Test` | 27 | уставки включительно (High, Low), гистерезис, NaN и ±Inf — недостоверно, инверсия DI, события достоверности; байпас: истечение ровно в срок, остаток, предел числа (младший канал выигрывает), без ключа, снятие ключа, повторный запрос, нулевой срок, события; рассогласование: ровно после задержки, «на пределе» — нет, исключает байпасированные и недостоверные, отключение, не влияет на срабатывание; ошибка конфигурации снимает байпасы; неиспользуемые каналы; «время назад» заканчивает байпас (D-19); системное время по умолчанию; проверка конфигурации — каждое правило; DegradeAvailable: 2oo3 как 2oo2 |
+| `FB_CauseEffect_Test` | 37 | конфигурация по умолчанию и неверная CRC — срабатывание всего; маска за пределами числа причин; восстановление конфигурации требует сброса; старт в сработавшем и без; задержка ровно, короткий импульс, нулевая задержка; фиксация; сброс: запрещён при требовании и во время отсчёта, разрешён при обходе, кнопка по фронту, зажатая при старте кнопка; первопричина: самая ранняя, одновременные (младшая и маска), метка времени от источника, очистка сбросом; обходы: истечение ровно, запрет, без ключа, отмена, повтор, новый обход сразу после истечения и после снятия в том же вызове — полный срок, пусковой по маске, задержка идёт во время обхода; выключенная причина, неиспользуемые следствия, очистка команд, порядок событий в вызове, событие срабатывания следствия с причиной; проверка конфигурации — каждое правило; «время назад»: идущая задержка срабатывает, обход снимается (D-19); системное время по умолчанию |
+| `FB_SisEventLog_Test` | 6 | кольцо затирает самое старое, номер растёт и переходит через `16#FFFFFFFF`, чтение за пределами — пустая запись, очистка сохраняет номер, `SIZEOF(ST_SisEvent) = 24`, запись через интерфейс сохраняет поля |
+| `FB_SisUnit_Test` | 5 | внешняя причина без голосования, выключенная причина не вызывает группу, ошибка конфигурации группы — срабатывает только её причина, один источник времени для всех ФБ, порядок событий (голосование раньше матрицы) |
+| `FB_SisUtil_Test` | 9 | CRC-16/CCITT-FALSE: контрольное значение `16#29B1` и CRC демо-матрицы `16#CD40`; функции битов и масок за пределами; NE 43: 3,6 и 21,0 мА — недостоверно, 3,61 и 20,99 мА — достоверно, NaN; масштабирование мА → инж. ед.; младший установленный бит; запись события без приёмника |
+| `FB_Common_Test` | 4 | маски помещаются в `WORD`; конфигурации и состояния по умолчанию — безопасные; коды перечислений совпадают с контрактом |
+| `FB_VoteTruth_Test` (генерируется `cemgen`) | 36 | 12 таблиц `F_VoteEval` (300 строк) и 24 таблицы `FB_Voting` (3888 строк) по эталонной модели `cemgen` |
+| `FB_VoteTable*_Test` (8 наборов, `tools_project`) | 36 | те же 4188 строк по независимой модели `tools_project/vote_model.py`, по ассерту на строку |
+| `FB_CemGen01_Test`, `FB_CemGen02_Test` (генерируются `cemgen`) | 71 | на каждую причину V-101: требование отключает ровно свои следствия (10), задержка «до и ровно» (8), пусковой обход истекает (3) или отклонён (7), сброс только после снятия (10), отказ канала по политике (10), байпас истекает (8) или запрещён (2); первопричина для 10 пар причин, одновременная фиксация, старт ПЛК, проверка сгенерированной конфигурации |
 
 ## Проверки без CODESYS
 
-Итоги последнего прогона CI (ссылка на запуск GitHub Actions) или локального прогона.
+Локально, 16.10.2026, Windows, Python 3.12.10 (CI GitHub Actions — те же команды на Linux).
 
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy`, `pytest` | пройдено, 2026-10-16, локально | pytest: все тесты, включая интеграционные с настоящими `plc` и iec_checker |
-| `tools/assemble.py` (все варианты, с `--tests` и без) | пройдено, 2026-10-16, локально | 8 объектов `src/` + 3 объекта `tests/` |
-| `tools/check/st_lint.py --strict` | пройдено, 2026-10-16, локально | 60 файлов, 0 замечаний |
-| iec_checker 0.4 (локально, `run_iec_checker.py --tests`) | пройдено, 2026-10-16 | 11 файлов, ошибок разбора нет; необоснованных находок 0, обоснованных 100 — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
-| RuSTy 1.0.6 (локально, `run_rusty.py`) | пройдено, 2026-10-16 | 11 файлов (`src/` и `tests/` с прокладкой coUnit), исключений нет, 0 ошибок, 0 предупреждений |
+| `ruff check`, `ruff format --check`, `mypy` | пройдено | 77 файлов Python; mypy (strict) — 58 модулей без замечаний |
+| `pytest` | 841 пройдено | `tools/tests` 528, `tools/project_checks` 106, `tools_project` 13, `pytests` (cemgen) 194; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
+| `cemgen validate --strict` (CSV и XLSX) | 0 ошибок, 0 предупреждений | `SIS-V101-CEM`, ревизия A, 10 причин, 7 следствий, CRC `16#CD40` |
+| `cemgen generate --check` | совпадает (251 файл) | ST, тесты, документы по матрице и раздел 3 `SRS.md` |
+| `gen_voting_tests.py --check` | совпадает | 8 наборов, 36 тестов, 4188 ассертов |
+| `tools/assemble.py --tests` | пройдено | 80 объектов |
+| `tools/check/st_lint.py --strict` | пройдено | 711 файлов, 0 замечаний |
+| iec_checker 0.4 (`run_iec_checker.py --tests`) | пройдено | 80 объектов, ошибок разбора нет; необоснованных находок 0 — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
+| RuSTy 1.0.6 (`run_rusty.py`) | пройдено | 47 файлов, 34 исключены (`tools/check/rusty_exclude.txt`: зависят от `PL.*`), 0 ошибок |

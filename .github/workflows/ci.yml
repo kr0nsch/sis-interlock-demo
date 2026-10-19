@@ -1,4 +1,5 @@
-# CI шаблона ПЛК-репозитория: проверки, которым не нужен CODESYS.
+# CI ПЛК-репозитория (из шаблона plc-repo-template): проверки, которым не нужен CODESYS, и проверки
+# генераторов проекта — cemgen (матрица причин и следствий) и таблиц истинности голосования.
 # Сборка и тесты в CODESYS выполняются на Windows вручную (docs/MANUAL_STEPS.md, раздел 5):
 # cds.py build (объекты, достижимые из задач), cds.py check --tests (полная проверка компиляции:
 # все объекты src/ и tests/), cds.py test, cds.py roundtrip. Для раннера Windows с CODESYS — те же
@@ -91,10 +92,39 @@ jobs:
         if: ${{ !cancelled() }}
         run: python -m mypy
 
+      # Тесты инструментов шаблона, проверки соглашений проекта (tools/project_checks) и генератора
+      # таблиц истинности (tools_project); тесты cemgen — отдельным шагом ниже
       - name: pytest
         id: pytest
         if: ${{ !cancelled() }}
-        run: python -m pytest
+        run: python -m pytest --ignore-glob='pytests/*'
+
+      - name: "cemgen: pytest"
+        id: cem_pytest
+        if: ${{ !cancelled() }}
+        run: python -m pytest pytests
+
+      # Матрица причин и следствий — единственный источник конфигурации ST, тестов по матрице,
+      # документов и раздела 3 docs/SRS.md: CSV и XLSX проходят проверку, а сгенерированное в
+      # репозитории совпадает с матрицей
+      - name: "cemgen: проверка матрицы"
+        id: cem_validate
+        if: ${{ !cancelled() }}
+        run: |
+          python -m cemgen validate examples/separator/cem.csv --strict
+          python -m cemgen validate examples/separator/cem.xlsx --strict
+
+      - name: "cemgen: сгенерированное совпадает с матрицей"
+        id: cem_check
+        if: ${{ !cancelled() }}
+        run: python -m cemgen generate examples/separator/cem.csv --check
+
+      # Вторая, независимая реализация таблиц истинности (tools_project/vote_model.py, A-10 в
+      # docs/ASSUMPTIONS.md): tests/POUs/TruthTables/ совпадает с выводом генератора
+      - name: "Таблицы истинности: сгенерированное совпадает с моделью"
+        id: tt_check
+        if: ${{ !cancelled() }}
+        run: python tools_project/gen_voting_tests.py --check
 
       - name: Сборка ST (assemble)
         id: assemble
@@ -121,6 +151,10 @@ jobs:
           R_RUFF_FORMAT: ${{ steps.ruff_format.outcome }}
           R_MYPY: ${{ steps.mypy.outcome }}
           R_PYTEST: ${{ steps.pytest.outcome }}
+          R_CEM_PYTEST: ${{ steps.cem_pytest.outcome }}
+          R_CEM_VALIDATE: ${{ steps.cem_validate.outcome }}
+          R_CEM_CHECK: ${{ steps.cem_check.outcome }}
+          R_TT_CHECK: ${{ steps.tt_check.outcome }}
           R_ASSEMBLE: ${{ steps.assemble.outcome }}
           R_ST_LINT: ${{ steps.st_lint.outcome }}
           R_IEC_CHECKER: ${{ steps.iec_checker.outcome }}
@@ -141,7 +175,11 @@ jobs:
             echo "| ruff check | $(status "$R_RUFF") |"
             echo "| ruff format --check | $(status "$R_RUFF_FORMAT") |"
             echo "| mypy | $(status "$R_MYPY") |"
-            echo "| pytest | $(status "$R_PYTEST") |"
+            echo "| pytest (инструменты, соглашения, таблицы истинности) | $(status "$R_PYTEST") |"
+            echo "| pytest cemgen | $(status "$R_CEM_PYTEST") |"
+            echo "| cemgen validate (CSV, XLSX) | $(status "$R_CEM_VALIDATE") |"
+            echo "| cemgen generate --check | $(status "$R_CEM_CHECK") |"
+            echo "| gen_voting_tests.py --check | $(status "$R_TT_CHECK") |"
             echo "| assemble | $(status "$R_ASSEMBLE") |"
             echo "| st_lint --strict | $(status "$R_ST_LINT") |"
             echo "| iec_checker $IEC_CHECKER_VERSION | $(status "$R_IEC_CHECKER") |"

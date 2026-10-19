@@ -1,8 +1,14 @@
 # Ручные шаги
 
+> **Внимание.** Код демонстрационный и не предназначен для систем безопасности. Реальная ПАЗ
+> требует определения SIL, сертифицированных аппаратных и программных средств и валидации по
+> ГОСТ Р МЭК 61511.
+
 Шаги, которые выполняет человек в консоли Windows и в IDE CODESYS. Всё, что можно выполнить без
-CODESYS (сборка текстов, линтер, статанализ), описано в [README](../README.md#быстрый-старт-без-железа)
-и выполняется в CI.
+CODESYS (генератор, сборка текстов, линтер, статанализ), описано в
+[README](../README.md#быстрый-старт-без-железа) и выполняется в CI. Специфика проекта — разделы 5
+(библиотека plc-process-lib и полная проверка), 9 (демо-приложение в IDE), 10 (изменение матрицы)
+и 11 (протокол FAT).
 
 Команды разделов 3–7 проверены прогоном на CODESYS V3.5 SP17 Patch 3 (3.5.17.30, 32-битная сборка
 ОВЕН) и CODESYS Control Win V3 в пользовательском процессе (16.10.2026), включая сборку, установку
@@ -123,7 +129,38 @@ setx CODESYS_PROFILE "CODESYS V3.5 SP17 Patch 3"
 | `python tools/codesys/cds.py roundtrip` | импорт в чистый проект → экспорт → сравнение с `src/` и `tests/` |
 | `python tools/codesys/cds.py report` | итоги последнего `test` → `docs/TEST_REPORT.md` |
 
-**Рекомендуемая полная проверка** (перед коммитом и релизом, в каждом репозитории портфолио):
+**Библиотека plc-process-lib.** Проект ссылается на неё (`PL.I_TimeSource`, `PL.FB_Delay`,
+`PL.FB_FakeTime`, `PL.F_IsFinite`, константы NE 43). Клонируйте репозиторий библиотеки рядом —
+`..\plc-process-lib` — или задайте путь в `PL_REPO`. Если библиотеки нет в репозитории библиотек
+CODESYS, первый `build`, `check` или `test` соберёт её там (`cds.py library --install`) и повторит
+задание; проверить, что установлено: `python tools\codesys\cds.py deps --check`. Версия — новейшая
+установленная (`"*"` в `tools/codesys/config.json`); для релиза закрепите точную (раздел 7.3).
+Проверено 16.10.2026: plc-process-lib 0.1.0.0, собрана из соседнего репозитория.
+
+**Полная проверка этого проекта** (перед коммитом и релизом; DESIGN.md, 12.8):
+
+```bat
+python -m ruff check . && python -m ruff format --check . && python -m mypy && python -m pytest
+python -m cemgen generate examples/separator/cem.csv --check
+python tools_project\gen_voting_tests.py --check
+python tools\assemble.py --tests
+python tools\check\st_lint.py --strict
+python tools\check\run_iec_checker.py --tests
+python tools\codesys\cds.py build
+python tools\codesys\cds.py build --tests
+python tools\codesys\cds.py check --tests
+python tools\codesys\cds.py test
+python tools\codesys\cds.py roundtrip
+python tools\codesys\cds.py report
+python -m cemgen fat-report examples/separator/cem.csv --results build/test-results.json
+```
+
+Последний прогон (16.10.2026) — [TEST_REPORT.md](TEST_REPORT.md): сборки без ошибок и
+предупреждений, 238 тестов из 238, roundtrip без диффа, протокол FAT — 55 шагов из 55.
+`cds.py test` с этим проектом длится около 5 минут (импорт ~30 с, загрузка и прогон ~1 мин, ожидание
+рантайма, если его занимает другой проект).
+
+В каждом репозитории портфолио минимум тот же:
 
 ```bat
 python tools\codesys\cds.py build
@@ -143,7 +180,7 @@ python tools\codesys\cds.py roundtrip
 - `import` печатает, что создано, обновлено, удалено и перемещено. Повторный импорт без правок —
   «создано 0, обновлено 0, удалено 0». Ошибки раскладки (коды LAY) — отказ без изменений проекта.
 - `build`: ошибки и предупреждения компилятора с файлом и строкой раскладки, например
-  `src/POUs/F_Clamp/F_Clamp.impl.st:16: Error C0046 Идентификатор 'rValueX' не задан`. Сообщения
+  `src/POUs/Sis/F_SisAiToEu/F_SisAiToEu.impl.st:3: Error C0046 Идентификатор 'rLoX' не задан`. Сообщения
   IDE — на русском. Если в IDE видны ошибки, которых нет в выводе, — скопируйте их в
   [BUILD_ERRORS.md](BUILD_ERRORS.md). Перед открытием проекта `cds.py` удаляет кэш предкомпиляции
   `build/<имя>_project.precompilecache`: с ним CODESYS 3.5.17.30 после замены объявления ФБ с
@@ -222,7 +259,8 @@ python tools\codesys\cds.py roundtrip
 
 `.project` и `.library` в git не хранятся — прикладываются к релизу GitHub. Команды этого раздела
 проверены на 3.5.17.30 (16.10.2026) на двух временных репозиториях — библиотеке и проекте, который
-её использует; сам шаблон собирается в библиотеку `sis-interlock-demo` (`cds.py library`).
+её использует; этот репозиторий собирается в библиотеку `sis-interlock-demo` (`cds.py library`, без
+`PRG_Main`).
 
 ### 7.1. Выпуск релиза
 
@@ -274,6 +312,9 @@ python tools\codesys\cds.py roundtrip
   (строка «установлена cds.py из <рабочая копия> @ <коммит>»).
 
 ### 7.3. Проект, который использует библиотеку портфолио
+
+В этом репозитории так подключена plc-process-lib (`tools/codesys/config.json`, ключ
+`plc-process-lib`, версия `*` и `library.libraries`); ниже — общий порядок.
 
 1. Клонировать репозиторий библиотеки рядом: `..\plc-process-lib` (или задать путь в переменной из
    `build_from_repo`, например `PL_REPO`) и переключить его на нужный тег.
@@ -332,3 +373,81 @@ python tools\codesys\cds.py roundtrip
    ```
 
 3. После каждого релиза повторять `git push mirror --all` и `git push mirror --tags`.
+
+## 9. Демо-приложение V-101 в IDE
+
+Рабочий проект `build\sis-interlock-demo.project` (MainTask 20 мс → `PRG_Main` → `PRG_Sis`) работает
+без ввода-вывода: в первом цикле `PRG_Main` ставит нормальные значения входов
+(`GVL_Const.DEMO_IO_SIMULATION`), а воздействия — запись переменных из IDE.
+
+_В IDE эта последовательность не выполнялась. Та же логика с той же конфигурацией проверена
+автотестами на стенде `FB_SisHarness`: `Matrix_Start_TrippedUntilReset`,
+`Matrix_PSHH101Demand_TripsOwnEffects`, `Matrix_PSHH101Reset_OnlyAfterClear`,
+`Matrix_PSHH101ChannelInvalid_MatchesPolicy`, `Matrix_PSHH101Bypass_ExpiresBackToVoting`,
+`Matrix_PSLL101Override_ExpiresThenTrips`._
+
+1. `python tools\codesys\cds.py build`, затем `python tools\codesys\cds.py runtime start`.
+2. Открыть `build\sis-interlock-demo.project` в IDE (раздел 6), «Онлайн → Логин» (пользователь из
+   `credentials.json`), загрузить приложение и запустить (F5).
+3. В окно наблюдения добавить `GVL_SisIo.stIo` (входы в мА, ключи и выходы `xQ*`),
+   `GVL_Sis.fbApp.stCemSts` (первопричина, маски, блокирующая сброс причина, остатки задержек и
+   обходов), `GVL_Sis.fbApp.astVoteSts[1]` (голосование PSHH101) и `GVL_Sis.stCmd`.
+4. **Старт.** Все `xQ*` = `FALSE` (обесточены), `stCemSts.uiFirstOut` = 65534
+   (`SIS_FIRST_OUT_START`): после старта ПЛК ПАЗ ждёт сброса оператором (D-03).
+5. **Сброс.** Подготовить `GVL_Sis.stCmd.stCem.xReset := TRUE` и записать значения (Ctrl+F7) —
+   ФБ сам снимает команду. Все `xQ*` = `TRUE`, `uiFirstOut` = 0. То же делает фронт кнопки
+   `GVL_SisIo.stIo.xHS120`.
+6. **Срабатывание PSHH101 (2oo3, 0,90 МПа, 2 с).** Записать `rPT101A_mA := 13.2` и
+   `rPT101B_mA := 13.2` (0,92 МПа; норма — 10,0 мА = 0,60 МПа). Через 2 с `xQESDV101`, `xQH101`,
+   `xQUA110` = `FALSE`, остальные `xQ*` — `TRUE`; `uiFirstOut` = 1, `wCauseLatched` = 1. Один канал
+   (`rPT101A_mA` без `rPT101B_mA`) срабатывания не даёт. Через 10 с `astVoteSts[1].xDiscrepancy` =
+   `TRUE`: каналы расходятся больше чем на 0,05 МПа — это диагностика, на срабатывание не влияет.
+7. **Сброс при требовании.** Команда сброса отклоняется: `uiResetBlocker` = 1, следствия остаются
+   обесточенными. Вернуть 10.0 мА на оба канала — следствия всё ещё обесточены (фиксация); сброс —
+   под напряжением.
+8. **Отказ канала.** `rPT101A_mA := 2.0` (обрыв, ниже 3,6 мА по NE 43): `astVoteSts[1].eArchEff` —
+   `Vote1oo2` (политика VoteTrip), срабатывания нет; теперь хватает одного канала: `rPT101B_mA := 13.2`
+   через 2 с даёт срабатывание.
+9. **Байпас канала.** Ключ `xHS121 := TRUE`, запрос `GVL_Sis.stCmd.astVote[1].axBypassReq[1] := TRUE`
+   (держится, пока нужен): `astVoteSts[1].aeBypass[1]` = `Active`, остаток — `atBypassRemain[1]`
+   (8 ч). Снятие ключа или запроса заканчивает байпас; события — в `GVL_Sis.fbLog`.
+10. **Пусковой обход PSLL101 (15 мин).** Ключ `xHS122 := TRUE`, `GVL_Sis.stCmd.stCem.wOverrideReq :=
+    16#0002` (бит причины 2): `stCemSts.wOverridden` = 2; давление ниже 0,15 МПа (`rPT101A_mA`,
+    `rPT101B_mA := 5.3`) не фиксируется, пока обход действует (`atOverrideRemain[2]`).
+
+Демо-режим рантайма — 2 часа, затем `python tools\codesys\cds.py runtime restart`. Закончив, выйти
+из рантайма и закрыть IDE: иначе `cds.py` откажется работать с проектом (раздел 6).
+
+## 10. Изменение матрицы причин и следствий
+
+Матрица `examples/separator/cem.csv` — единственный источник конфигурации, тестов по матрице и
+документов. Сгенерированные файлы (`src/**/Generated/`, `tests/**/Generated/`,
+`docs/cause_effect_matrix.*`, `docs/FAT_protocol.md`, `docs/truth_tables/VOTING.md`, раздел 3
+`docs/SRS.md`) руками не правятся: CI это заметит (`generate --check`), а ПЛК — по CRC.
+
+1. Править CSV (UTF-8, разделитель `;`) или XLSX (лист `CEM`):
+   `python -m cemgen convert examples/separator/cem.csv build\cem.xlsx`, правка в Excel, обратно —
+   `python -m cemgen convert build\cem.xlsx examples/separator/cem.csv`. Поднять `revision` и `date`
+   в `[header]`.
+2. `python -m cemgen validate examples/separator/cem.csv --strict` — ошибки с номером строки и
+   колонкой файла (как в Excel) и подсказкой «Как исправить».
+3. `python -m cemgen generate examples/separator/cem.csv` — печатает новые, изменённые и удалённые
+   файлы и число тестов по матрице.
+4. Если меняли XLSX в репозитории: `python -m cemgen convert examples/separator/cem.csv
+   examples/separator/cem.xlsx` (байты XLSX недетерминированы — коммитится вручную).
+5. Полная проверка (раздел 5), затем `cemgen fat-report` (раздел 11). В ревью — дифф матрицы,
+   `GVL_SisCfg.gvl.st` (маски, уставки, CRC), тестов и документов.
+
+Формат матрицы и правила проверки — [DESIGN.md](DESIGN.md), раздел 9; генератор —
+[CEMGEN.md](CEMGEN.md).
+
+## 11. Протокол FAT
+
+- `docs/FAT_protocol.md` — бланк: шаги, воздействия, ожидаемый результат и автотесты, графы
+  «Результат» и «Отметка» пустые. Для испытаний на стенде его можно распечатать и заполнять вручную.
+- `python -m cemgen fat-report examples/separator/cem.csv --results build/test-results.json` после
+  `cds.py test` пишет `docs/FAT_REPORT.md`: шаг «соответствует», если по каждому его шаблону
+  автотестов есть результаты и все пройдены; «не соответствует» — с сообщением первого упавшего
+  теста; «не выполнялся» — нет результатов. Код выхода 1, если есть упавшие тесты.
+- Раздел 8 протокола (замечания и подписи) заполняется вручную. FAT на реальном шкафу с ПЛК210 и
+  модулями ввода-вывода — вне рамок демо.

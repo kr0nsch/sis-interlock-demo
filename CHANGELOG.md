@@ -9,121 +9,91 @@
 
 ### Added
 
-- Раскладка исходников ST в `src/` и `tests/` и её формальный контракт `docs/LAYOUT.md`.
-- Пример: `E_DeviceMode`, `ST_ExampleCmd`, `ST_ExampleSts`, `GVL_Const`, интерфейс `I_Resettable`,
-  функция `F_Clamp`, `FB_Example` (метод `Acknowledge`, реализация `Reset`, свойство `Count`), `PRG_Main`.
-- Тесты CfUnit (coUnit 1.2.0.0): наборы `FB_F_Clamp_Test` (7 тестов), `FB_Example_Test` (11 тестов:
-  пороги и гистерезис, отказ и квитирование, режимы, ограничение параметров, счётчик, сброс через
-  `I_Resettable`) и `PRG_Tests`.
-- Инструменты: `tools/assemble.py`, `tools/check/` (линтер `st_lint.py`, запуск iec_checker и RuSTy),
-  скрипты CODESYS Scripting в `tools/codesys/`.
-- `tools/codesys/cds.py` — импорт, сборка, тесты coUnit в CODESYS Control Win V3 (пользовательский
-  процесс), экспорт, roundtrip, JUnit и отчёт из консоли; настройки — `tools/codesys/config.json`.
-  Проверено в CODESYS 3.5.17.30.
-- `cds.py library [--install] [--compiled] [--released]`: библиотека CODESYS из `src/` — `build/<имя>.library`
-  (и `.compiled-library`) с Project Information из `config.json: library`, «проверить все объекты пула»
-  с ошибками в строках `src/`, установка в репозиторий библиотек; `library --uninstall [--all-versions]`.
-  Проверено в CODESYS 3.5.17.30.
-- Библиотеки-зависимости портфолио: в `config.json: libraries` — закрепление версии (точная или `*`),
-  пространство имён ссылки, плейсхолдер, `install_from` и `build_from_repo`; `cds.py deps [--rebuild]
-  [--check]`; `import`/`build`/`test` сами собирают недостающую библиотеку в соседнем репозитории
-  (`cds.py library --install` там) и повторяют задание (`--no-deps` — отключить). Найденная библиотека
-  проверяется и по её собственным зависимостям (рекурсивно); цикл зависимостей между репозиториями —
-  отказ, а не бесконечная цепочка сборок. Ссылки `library.libraries` подключаются и к проектам
-  приложения и тестов репозитория-библиотеки. Учёт установок: из какой рабочей копии и коммита
-  поставлена версия.
-- Разделы `library` и `library_repository` в `tools/codesys/config.json`, глобальная блокировка
-  репозитория библиотек; тесты `tools/tests/test_cds_library.py`.
-- CI GitHub Actions: ruff, mypy, pytest, сборка ST, линтер (`--strict`), iec_checker v0.4 (закреплён
-  по размеру и SHA-256); необязательно — iec_checker `nightly` (образ закреплён по дайджесту) и RuSTy.
-- Документы: архитектура, ручные шаги, допущения, отчёты статанализа и тестов, шаблоны ТЗ
-  (ГОСТ 34.602-2020) и ПМИ.
-- `LICENSE` (MIT), `.gitignore`, `.gitattributes`, `.editorconfig`.
-- `cds.py check [--tests]`: компиляция всех объектов `src/` (и `tests/`) — и тех, что не достижимы из
-  задач и которые `build` не компилирует (программа без задачи, ФБ без экземпляра, неиспользуемый
-  DUT): «Проверить все объекты пула» в проекте без устройства, проект на диск не пишется; ошибки — с
-  файлом и строкой, код 1. Библиотеки — те же, что у `build`: ссылки из `config.json` и копии ссылок,
-  которые добавляет само устройство (`#IoStandard`, `#CAA Device Diagnosis`, ...). Persistent
-  Variables проверяются как GVL. Рекомендуемая полная проверка — `build`, `check --tests`, `test`,
-  `roundtrip` (`docs/MANUAL_STEPS.md`, раздел 5). Проверено в CODESYS 3.5.17.30.
-- Библиотека Standard по умолчанию: в `config.json` ключ `standard` (плейсхолдер `#Standard`, версию
-  задаёт профиль, явные `namespace: Standard` и `qualified_only: false` — доступ и `TON`, и
-  `Standard.TON`, как в проекте IDE) в `library.libraries`, то есть во всех режимах, в `check` и в
-  библиотеке репозитория. Проверено в CODESYS 3.5.17.30 (TON, R_TRIG, CTU, CONCAT в режимах normal,
-  test и library).
-- `tools/tests/test_cds_config.py`: `config.json` репозитория проверяется на уровне схемы (разделы и
-  ключи — как у эталона `tools/tests/fixtures/config_template.json`, описания режимов, задач и
-  библиотек полные и разрешаются).
-- Понижение `iec-checker` (`tools/st_flavors.py`) для конструкций CODESYS, которых нет в грамматике
-  iec_checker 0.4 (раньше — ParserError): операторы `TIME()`/`LTIME()` (вызов заглушки `CDS__TIME()`,
-  `CDS__LTIME()`; литерал длительности давал бы ложные ZeroDivision и PLCOPEN-CP28), константы в границах массивов и длинах строк (`ARRAY[0..GVL_Const.N - 1]`
-  → числа по константам GVL, `VAR CONSTANT` и перечислений), поле и вызов элемента массива (`a[i].x` →
-  `a.x[i]`, `afb[i](...)` → `afb(..., i)`), несколько индексов, длительности с пропуском единиц
-  (`T#1h500ms` → `T#1H0M0S500MS`), пустой оператор `;`, пустые ветви и тела (`CDS__NOP();`), пустые
-  `PROGRAM`/`FUNCTION` (`{}`), имена — ключевые слова iec_checker (`Priority` → `Priority_`),
-  `WORD#16#FF`, `BOOL#1`, `1E3`, `AND_THEN`/`OR_ELSE`, управляющие слова в нижнем регистре, вложенные
-  массивы; целые константные начальные значения подставляются числом. Пример
-  `tools/tests/fixtures/lowering/` и эталон `tools/tests/golden/iec-checker-lowering/`; проверено
-  бинарником v0.4 и на копиях plc-process-lib и s7-to-codesys (ошибок разбора 0). В псевдониме типа с
-  десятичными границами (`TYPE T_Pct : INT(0..100) := 50;`) поддиапазон больше не убирается: iec_checker
-  его разбирает и проверяет начальное значение (OutOfBounds).
-- `tools/README.md`, «Понижение для iec_checker»: у каждой замены — влияние на находки, в том числе какие
-  виды находок она может скрыть (PLCOPEN-N3 у переименованных имён, OutOfBounds у невычисленных границ и
-  массивов в `STRUCT`, PLCOPEN-CP13 у рекурсии методов) или добавить; сводная таблица по проверкам
-  iec_checker 0.4.
-- Пример `tools/tests/fixtures/sourcemap/` с многострочными конструкциями и тесты карты строк после
-  понижения: по меткам строк (`test_source_map_multiline_constructs`, все варианты сборки) и по находкам
-  настоящего iec_checker (`test_integration_findings_point_to_source_lines`).
-- Вариант `rusty`: `VAR_IN_OUT CONSTANT` → `VAR_IN_OUT` (R13); прокладка
-  `tools/check/rusty_shims/codesys_conversions.st` — преобразования TIME/LTIME ↔ целые, битовые и REAL
-  (`TIME_TO_DINT`, `UDINT_TO_TIME`, ...), которых нет в stdlib RuSTy 1.0.6.
-- `st_lint` STL007: составные префиксы массивов `a` + префикс элемента (`astAlarm`, `afbAlarm`,
-  `aitfDev`, `altStart`, `audiReserve`), настройка `array_element_prefixes` (`match`, `any`, `off`);
-  проверка ключей `st_lint.toml` (неизвестный ключ или значение не того вида — ошибка настроек).
+- Раскладка исходников ST в `src/` и `tests/`, её контракт `docs/LAYOUT.md` и инструменты шаблона:
+  `tools/assemble.py`, `tools/check/` (линтер `st_lint.py`, iec_checker, RuSTy), `tools/codesys/cds.py`
+  (импорт, сборка, проверка всех объектов, тесты coUnit в Control Win, экспорт, roundtrip, отчёт,
+  библиотеки и зависимости) — из шаблона plc-repo-template.
+- Контракт проекта `docs/DESIGN.md` v1.1.0: типы и константы, алгоритмы голосования и исполнителя
+  матрицы (нормативный псевдокод), журнал событий, формат матрицы `cem/1`, генератор, демо-объект,
+  стратегия испытаний, решения D-01…D-19.
+- Типы ПАЗ (`src/DUTs/Sis/`): 9 строгих перечислений (схемы MooN, политики деградации, состояния
+  каналов и байпасов, виды входа и событий, безопасные состояния) и 12 структур (конфигурация,
+  входы, команды и состояния групп голосования и матрицы, событие журнала — 24 байта);
+  `GVL_Const` с пределами, кодами первопричины, CRC и битами ошибок конфигурации; интерфейс
+  `I_SisEventSink`.
+- Голосование: `F_VoteEval` (1oo1, 1oo2, 2oo2, 2oo3; политики VoteTrip, DegradeSafe,
+  DegradeAvailable), `FB_Voting` (дискретные и аналоговые каналы, уставка включительно с
+  гистерезисом, достоверность, байпас канала со сроком, пределом числа и ключом разрешения,
+  рассогласование аналоговых каналов, события), `F_VoteCheckCfg`, `F_VoteArchChannels`,
+  `F_VoteArchRequired`.
+- Исполнитель матрицы `FB_CauseEffect`: задержки причин на `PL.FB_Delay`, фиксация до ручного
+  сброса, сброс только при снятых причинах (кнопка по фронту и команда HMI), первопричина с меткой
+  времени и маской одновременных, пусковые обходы со сроком, следствия с обесточиванием на
+  срабатывание, старт ПЛК в сработавшем состоянии, проверка конфигурации и CRC-16/CCITT-FALSE
+  матрицы (`F_CemCheckCfg`, `F_CemCrc`, `F_SisCrc16Byte`).
+- Журнал `FB_SisEventLog` (кольцо 64 события, монотонный номер), общий узел `FB_SisUnit` (один
+  источник времени на вызов), функции `F_SisBit`, `F_SisBitMask`, `F_SisLowMask`, `F_SisFirstBit`,
+  `F_SisLogEvent`, `F_SisNe43Valid` (NAMUR NE 43), `F_SisAiToEu`.
+- Генератор `cemgen` (Python 3.11+, `python -m cemgen`): загрузка CSV и XLSX, проверка по правилам
+  CEM-E001…E030 и CEM-W001…W006 с номером строки, колонкой и подсказкой; эталонная модель логики
+  (`refmodel.py`, REAL как float32); генерация конфигурации ST и привязки объекта
+  (`src/**/Generated/`), сценарных тестов coUnit по матрице и таблиц истинности
+  (`tests/**/Generated/`), документов `docs/cause_effect_matrix.md` и `.html` (печать на A3, светлая и
+  тёмная схемы), `docs/truth_tables/VOTING.md`, протокола FAT `docs/FAT_protocol.md` и раздела 3
+  `docs/SRS.md` (блок между маркерами `cemgen:sif`); команды `validate`, `generate [--check]`,
+  `convert`, `fat-report`; необязательный адаптер-генератор `sis-cem` для iolistgen.
+- Демо-объект — вымышленный сепаратор V-101: матрица `examples/separator/cem.csv` и `.xlsx`
+  (10 причин, 7 следствий, CRC `16#CD40`), стенд сценарных тестов `FB_SisHarness`.
+- Тесты coUnit: 7 наборов граничных случаев (95 тестов), таблицы истинности по эталонной модели
+  `cemgen` (36 тестов, 4188 строк) и по второй, независимой модели `tools_project/vote_model.py`
+  (`tools_project/gen_voting_tests.py`, 8 наборов, 36 тестов), 71 сценарий по матрице. Проверено в
+  CODESYS 3.5.17.30 / CODESYS Control Win V3: 18 наборов, 238 тестов пройдены. Чувствительность
+  проверена 10 мутациями `FB_Voting` и `FB_CauseEffect` — каждую поймали тесты (`docs/ASSUMPTIONS.md`, R-08).
+- pytest: генератор и модель (194 теста, `pytests/`), соглашения проекта — дисклеймер в каждом
+  объекте ST, имена и регистрация тестов (`tools/project_checks/`), вторая модель против таблиц
+  контракта (`tools_project/`).
+- Документы: `docs/SRS.md` (демонстрационная структура спецификации требований безопасности по
+  ГОСТ Р МЭК 61511-1 с разделом функций безопасности из матрицы), `docs/FAT_REPORT.md` (отчёт по
+  прогону), `docs/CEMGEN.md`, архитектура, ручные шаги, допущения, отчёты тестов и статанализа.
+- CI: шаги «cemgen: pytest», проверка матрицы (CSV и XLSX), `cemgen generate --check`,
+  `gen_voting_tests.py --check`.
 
 ### Changed
 
-- Тесты `tools/tests/test_cds.py` и `test_cds_library.py` берут настройки из эталона
-  `tools/tests/fixtures/config_template.json`, а не из `config.json` репозитория: проект может менять
-  свои библиотеки, задачи и библиотеку репозитория без исключения тестов шаблона (`--deselect`).
-  Проекту, который исключал их раньше, после обновления `tools/` исключения `test_cds.py` и
-  `test_cds_library.py` в `pyproject.toml` и свои тесты-замены для них нужно убрать: тесты-замены,
-  подменявшие `config.json` в модулях тестов шаблона, с новыми тестами не работают (проверено на копии
-  s7-to-codesys: 7 падений замены, а сами тесты шаблона и `test_cds_config.py` проходят с его
-  `config.json`).
-- `tools/check/st_lint.toml` принадлежит проекту: тест `test_toml_matches_defaults` заменён на
-  `test_template_toml_matches_defaults` (с умолчаниями сравнивается эталон
-  `tools/tests/fixtures/st_lint_template.toml`) и `test_repository_toml_is_valid` (файл репозитория
-  разбирается, все ключи известны); тесты линтера берут настройки из эталона. Проекту, который исключал
-  `test_toml_matches_defaults` (`--deselect`), исключение нужно убрать.
-- `test_run_rusty.py::test_integration_sample_passes` проверяет фикстуру со своим пустым файлом
-  исключений, а не с `tools/check/rusty_exclude.txt` репозитория.
-- `cds.py import`, `library`, `check`: два описания `libraries`, которые нашли одну библиотеку, дают
-  одну ссылку (одинаковые сливаются с предупреждением, разные — отказ до открытия проекта, код 1);
-  ссылки Library Manager после импорта — в поле `references` отчёта `build/import.json`.
+- `PRG_Main` вызывает программу ПАЗ `PRG_Sis`; в демо без ввода-вывода в первом цикле ставит
+  нормальные значения входов.
+- `tools/codesys/config.json`: зависимость plc-process-lib (`PL`, версия `*`, сборка из
+  `../plc-process-lib` или `PL_REPO`), библиотека репозитория `sis-interlock-demo` с пространством
+  имён `SIS` без `PRG_Main`.
+- `pyproject.toml`, `requirements-dev.txt`: пакет `cemgen`, `openpyxl`, пути ruff, mypy и pytest.
+- Обоснования статанализа (`tools/check/iec_checker_allow.toml`, `rusty_exclude.txt`,
+  `docs/STATIC_ANALYSIS.md`) — под код проекта.
+
+### Removed
+
+- Пример шаблона: `FB_Example`, `F_Clamp`, `ST_ExampleCmd`, `ST_ExampleSts`, `E_DeviceMode`,
+  `I_Resettable` и их тесты.
 
 ### Fixed
 
-- `st_lint` STL007: `VAR_IN_OUT CONSTANT` (и `VAR_INPUT CONSTANT`) больше не считается секцией
-  констант — для параметров только для чтения действуют префиксы по типу, а не UPPER_SNAKE_CASE.
-- Понижение `iec-checker`: начальное значение `[...]` массива в поле структуры убирается вместе с
-  типом массива (раньше `x : REAL := [...]` — ParserError); `ARRAY[0..2 * N]` — умножение в границе
-  больше не принимается за `ARRAY[*]`.
-- Тесты coUnit: функции `TEST` и `TEST_FINISHED` вызываются с пространством имён (`coUnit.TEST(...)`) —
-  без него сборка в CODESYS 3.5.17.30 давала ошибки C0046/C0035.
-- `cds.py build`/`test`: перед открытием проекта удаляется кэш предкомпиляции CODESYS — с ним
-  сломанное объявление ФБ с методами собиралось с «0 ошибок», а исправленное давало старую ошибку.
-- `cds.py`: устаревший файл блокировки `<проект>.~u` (CODESYS остановлен по таймауту или упал)
-  удаляется, проект, открытый в IDE, — понятный отказ с кодом 3 вместо трассировки.
-- `cds.py import`: переименование только регистром (файл, метод, свойство, папка) доходит до проекта.
-- `cds.py test`: старые `build/junit.xml` и `build/test-results.json` удаляются перед прогоном;
-  неудачный вход в рантайм — одна строка с причиной и код 3 вместо трассировки; имя пользователя
-  рантайма не пишется в журнал.
-- `docs/MANUAL_STEPS.md`, `README.md`: команды без `& rem` — работают в cmd, PowerShell и Git Bash.
-- `cds.py import`: ссылка на библиотеку другой версии заменяется (раньше оставалась старая, и в проекте
-  оказывались обе); новейшая версия выбирается по номеру, а не по строке (`1.10` новее `1.9`); все
-  недостающие библиотеки — в одном сообщении, до изменения проекта.
-- `cds.py`: переменные рабочей копии (`CDS_REPO_ROOT`, `CDS_CONFIG`, `CDS_PROJECT*`, `CDS_LIBRARY*`) не
-  читаются из `HKCU\Environment` — заданные через `setx`, они действовали бы на все git worktree сразу.
-- Кэш предкомпиляции: имя по расширению файла (`<имя>_library.precompilecache` у библиотеки) — сборка
-  библиотеки больше не удаляет кэш проекта `<имя>_project.precompilecache`.
+По итогам ревизии функциональной безопасности (`docs/ASSUMPTIONS.md`, раздел «Ревизия», R-01…R-11):
+
+- «Время назад» у источника времени больше не продлевает байпасы каналов и пусковые обходы: перезапуск
+  отсчёта `PL.FB_Delay` давал им полный срок заново за каждый скачок. Теперь это неисправность
+  источника времени (D-19): событие `TimeFault` (новый код 24 `E_SisEventKind`), байпасы и обходы
+  снимаются, причины с идущей задержкой срабатывают сразу. Тесты `Voting_TimeBackwards_BypassEnds`,
+  `Cem_TimeBackwards_PendingDelayTrips`, `Cem_TimeBackwards_OverrideEnds` (прежние
+  `Voting_TimeBackwards_BypassRestarts` и `Cem_TimeBackwards_DelayRestarts` закрепляли небезопасное
+  поведение и удалены).
+- Пусковой обход, принятый в вызове сразу после истечения прежнего, истекал в том же вызове, а снятие и
+  новый запрос в одном вызове не перезапускали срок (нарушение 6.4 и D-13; та же ошибка была в
+  эталонной модели `cemgen`). Срок нового обхода теперь отсчитывается от вызова, где он принят
+  (`Preset` таймера). Тесты `Cem_Override_ReRequestAfterExpiryFullTime`,
+  `Cem_Override_CancelAndRequestRestarts`.
+- `cemgen validate`: предупреждение CEM-W006 — дискретный вход с требованием при 1 (срабатывает под
+  напряжением, обрыв цепи без контроля линии даёт «норму»).
+- Документы: охват CRC матрицы описан честно — только число причин и следствий и маски, остальная
+  конфигурация в ПЛК не контролируется (DESIGN.md 6.8, D-10, SRS); не обнаруживаемое программой
+  остановившееся время — ограничение (DESIGN.md 3.3, SRS 6.1); снятие ключа HS122 не снимает
+  действующий пусковой обход — записано явно; README не утверждает больше, что обрыв канала всегда
+  даёт срабатывание (по политике деградации).
