@@ -37,10 +37,12 @@ def test_demo_matrix_is_clean() -> None:
 
 
 def test_mini_matrix_only_permit_warnings() -> None:
+    # У мини-матрицы нет тегов ключей (два CEM-W005), а внешний вход XS303 — с требованием при 1
+    # (CEM-W006): так проверяется ветвь привязки ext под напряжением
     result = load(MINI_CSV)
     assert result.matrix is not None
-    assert codes(result) == {"CEM-W005"}
-    assert len(result.warnings) == 2
+    assert codes(result) == {"CEM-W005", "CEM-W006"}
+    assert len(result.warnings) == 3
 
 
 ERROR_CASES: list[tuple[str, str, Edit]] = [
@@ -134,7 +136,32 @@ WARNING_CASES: list[tuple[str, str, Edit]] = [
     ("CEM-W005", "нет ключа байпасов", lambda s: s.drop_header("bypass_permit_tag")),
     ("CEM-W005", "нет ключа обходов", lambda s: s.drop_header("override_permit_tag")),
     ("CEM-W006", "di: требование при 1 (под напряжением)", lambda s: s.set_cause(10, "trip_on", "1")),
+    (
+        "CEM-W006",
+        "ext: требование при 1 (под напряжением, без контроля линии)",
+        lambda s: (
+            s.set_cause(10, "signal", "ext")
+            .set_cause(10, "vote", "-")
+            .set_cause(10, "policy", "")
+            .set_cause(10, "trip_on", "1")
+        ),
+    ),
 ]
+
+
+def test_ext_deenergize_to_trip_no_warning(tmp_path: Path) -> None:
+    # Тишина CEM-W006 для ext: требование при 0 — срабатывание на обесточивание
+    result = run(
+        tmp_path,
+        lambda s: (
+            s.set_cause(10, "signal", "ext")
+            .set_cause(10, "vote", "-")
+            .set_cause(10, "policy", "")
+            .set_cause(10, "trip_on", "0")
+        ),
+    )
+    assert result.matrix is not None, [d.format("m.csv") for d in result.errors]
+    assert "CEM-W006" not in codes(result)
 
 
 @pytest.mark.parametrize(("code", "what", "edit"), WARNING_CASES, ids=[f"{c[0]}-{c[1]}" for c in WARNING_CASES])

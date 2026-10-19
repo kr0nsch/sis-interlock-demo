@@ -10,4 +10,5 @@ AssertEquals_INT(Expected := 2, Actual := TO_INT(E_CauseSource.External), Messag
 AssertEquals_INT(Expected := 4, Actual := TO_INT(E_SisEventKind.FirstOut), Message := 'FirstOut = 4');
 AssertEquals_INT(Expected := 13, Actual := TO_INT(E_SisEventKind.BypassOn), Message := 'BypassOn = 13');
 AssertEquals_INT(Expected := 23, Actual := TO_INT(E_SisEventKind.StartTrip), Message := 'StartTrip = 23');
+AssertEquals_INT(Expected := 24, Actual := TO_INT(E_SisEventKind.TimeFault), Message := 'TimeFault = 24');
 coUnit.TEST_FINISHED();

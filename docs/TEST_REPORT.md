@@ -13,12 +13,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-16 20:19:18. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 10:08:16. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-16 20:19:18 |
-| Коммит | da7d086-dirty |
+| Дата прогона | 2026-10-19 10:08:16 |
+| Коммит | ce8cf04-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -300,9 +300,9 @@ _Нет._
 
 ## Сборка и полная проверка компиляции в CODESYS
 
-CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 16.10.2026, после интеграции кода
+CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 19.10.2026, после интеграции кода
 логики ПАЗ и сгенерированного по матрице и после исправлений ревизии функциональной безопасности
-([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-11). `build` компилирует объекты, достижимые из задач; `check` —
+([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-13; прогон 16.10.2026 после исправлений R-01, R-02 дал те же итоги). `build` компилирует объекты, достижимые из задач; `check` —
 все объекты раскладки ([MANUAL_STEPS.md](MANUAL_STEPS.md), раздел 5). Библиотеки проекта:
 `#Standard` (Standard 3.5.17.0), plc-process-lib 0.1.0.0 (`plc-process-lib, * (plc-portfolio)`,
 собрана `cds.py` из соседнего репозитория, коммит `20d9528`), в тестовом проекте — coUnit 1.2.0.0;
@@ -314,10 +314,10 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | `cds.py build --tests` | 0 ошибок, 0 предупреждений | тестовый проект: TestTask 10 мс → `PRG_Tests`; код 1,39 МБ, глобальные данные 154 МБ |
 | `cds.py check` | 0 ошибок, 0 предупреждений | 50 объектов `src/` (включая `PRG_Main`) |
 | `cds.py check --tests` | 0 ошибок, 0 предупреждений | 80 объектов `src/` и `tests/` |
-| `cds.py test` | 238 из 238 | раздел выше; все наборы завершились к первому опросу. До исправлений ревизии новые тесты R-01, R-02 упали — 5 из 238 (тесты сначала) |
+| `cds.py test` | 238 из 238 | раздел выше; все наборы завершились к первому опросу. До исправлений ревизии новые тесты R-01, R-02 упали — 5 из 238 (тесты сначала, 16.10.2026) |
 | `cds.py roundtrip` | без диффа (711 файлов), повторный импорт — 0 изменений | импорт в чистый проект → экспорт → побайтное сравнение |
 | `cemgen fat-report` | 55 шагов из 55 «соответствует» | [FAT_REPORT.md](FAT_REPORT.md) по `build/test-results.json` этого прогона |
-| мутации (копия репозитория) | @MUT@ | 10 ошибок в `FB_Voting` и `FB_CauseEffect` по одной, `cds.py test` копии ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-08) |
+| мутации (копия репозитория) | поймано 16 из 16 | 16 ошибок в `FB_Voting` и `FB_CauseEffect` по одной, `cds.py test` копии, 19.10.2026: эталон без мутации — 238 из 238, у мутаций упало от 1 до 47 тестов ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-08) |
 | `cds.py deps --check` | есть | plc-process-lib 0.1.0.0, собрана из `../plc-process-lib` @ `20d9528` |
 
 ## Что проверяют тесты
@@ -337,16 +337,16 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 
 ## Проверки без CODESYS
 
-Локально, 16.10.2026, Windows, Python 3.12.10 (CI GitHub Actions — те же команды на Linux).
+Локально, 19.10.2026, Windows, Python 3.12.10 (CI GitHub Actions — те же команды на Linux).
 
 | Проверка | Итог | Примечание |
 |---|---|---|
 | `ruff check`, `ruff format --check`, `mypy` | пройдено | 77 файлов Python; mypy (strict) — 58 модулей без замечаний |
-| `pytest` | 841 пройдено | `tools/tests` 528, `tools/project_checks` 106, `tools_project` 13, `pytests` (cemgen) 194; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
+| `pytest` | 843 пройдено | `tools/tests` 528, `tools/project_checks` 106, `tools_project` 13, `pytests` (cemgen) 196; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
 | `cemgen validate --strict` (CSV и XLSX) | 0 ошибок, 0 предупреждений | `SIS-V101-CEM`, ревизия A, 10 причин, 7 следствий, CRC `16#CD40` |
 | `cemgen generate --check` | совпадает (251 файл) | ST, тесты, документы по матрице и раздел 3 `SRS.md` |
 | `gen_voting_tests.py --check` | совпадает | 8 наборов, 36 тестов, 4188 ассертов |
 | `tools/assemble.py --tests` | пройдено | 80 объектов |
 | `tools/check/st_lint.py --strict` | пройдено | 711 файлов, 0 замечаний |
-| iec_checker 0.4 (`run_iec_checker.py --tests`) | пройдено | 80 объектов, ошибок разбора нет; необоснованных находок 0 — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
+| iec_checker 0.4 (`run_iec_checker.py --tests`) | пройдено | 80 объектов, ошибок разбора нет; необоснованных находок 0 (обоснованных 2104) — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
 | RuSTy 1.0.6 (`run_rusty.py`) | пройдено | 47 файлов, 34 исключены (`tools/check/rusty_exclude.txt`: зависят от `PL.*`), 0 ошибок |
