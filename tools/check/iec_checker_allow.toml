@@ -134,7 +134,7 @@ id = "UnusedVariable"
 file = "src/POUs/Generated/*.decl.st"
 match = "variable: (STIO|FBUNIT)$"
 checker = "v0.4"
-reason = "Ложное срабатывание iec_checker 0.4: VAR_IN_OUT stIo используется обращениями к полям (stIo.rPT101A_mA), экземпляр fbUnit — вызовом и чтением выходов. Образ nightly вызов экземпляра считает использованием, а параметр stIo проверяет правилом PLCOPEN-CP17 (раздел nightly)"
+reason = "Ложное срабатывание iec_checker 0.4: VAR_IN_OUT stIo используется обращениями к полям (stIo.rPT101A_mA), экземпляр fbUnit — вызовом и чтением выходов. Образ nightly их как UnusedVariable не выдаёт, а параметр stIo проверяет правилом PLCOPEN-CP17 (раздел nightly)"
 
 [[allow]]
 id = "PLCOPEN-CP9"
