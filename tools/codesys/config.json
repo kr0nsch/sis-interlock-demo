@@ -141,13 +141,13 @@
     "company": "plc-portfolio",
     "version": {
       "env": "CDS_LIBRARY_VERSION",
-      "default": "0.1.0.0"
+      "default": "1.0.0.0"
     },
     "default_namespace": "SIS",
     "placeholder": null,
-    "author": "<ИМЯ ФАМИЛИЯ>",
+    "author": "kr0nsch",
     "description": "Демонстрация логики ПАЗ: голосование MooN, матрица причин и следствий, журнал событий",
-    "released": false,
+    "released": true,
     "exclude": [
       "PRG_Main"
     ],

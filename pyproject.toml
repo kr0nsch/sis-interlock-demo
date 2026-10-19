@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sis-interlock-demo"
-version = "0.1.0"
+version = "1.0.0"
 description = "Демонстрация логики ПАЗ на ST: голосование MooN, матрица причин и следствий, генератор cemgen"
 readme = "README.md"
 license = "MIT"

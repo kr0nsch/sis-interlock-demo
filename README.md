@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/<GITHUB_USER>/sis-interlock-demo/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/<GITHUB_USER>/sis-interlock-demo/ci.yml?branch=main&style=flat-square&label=CI&labelColor=1B2736"></a> <a href="LICENSE"><img alt="Лицензия MIT" src="https://img.shields.io/badge/license-MIT-56677D?style=flat-square&labelColor=1B2736"></a>
+  <a href="https://github.com/kr0nsch/sis-interlock-demo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/kr0nsch/sis-interlock-demo/actions/workflows/ci.yml/badge.svg"></a> <a href="LICENSE"><img alt="Лицензия MIT" src="https://img.shields.io/badge/license-MIT-56677D?style=flat-square&labelColor=1B2736"></a>
   <img alt="CODESYS 3.5.17.30" src="https://img.shields.io/badge/CODESYS-3.5.17.30-C2410C?style=flat-square&labelColor=1B2736"> <img alt="IEC 61131-3" src="https://img.shields.io/badge/IEC%2061131--3-56677D?style=flat-square"> <img alt="Язык: Structured Text" src="https://img.shields.io/badge/Structured%20Text-3A4B60?style=flat-square"> <img alt="Язык: Python" src="https://img.shields.io/badge/Python-3A4B60?style=flat-square&logo=python&logoColor=white">
   <a href="#тесты-и-проверки"><img alt="Тесты локального прогона 19.10.2026: coUnit 255 из 255 в CODESYS Control Win, pytest 858" src="https://img.shields.io/badge/tests-coUnit%20255%2F255%20%C2%B7%20pytest%20858-3A4B60?style=flat-square&labelColor=1B2736"></a> <img alt="Демонстрация, не SIL-система" src="https://img.shields.io/badge/safety-demo%2C%20not%20SIL-56677D?style=flat-square&labelColor=1B2736">
 </p>
@@ -71,7 +71,7 @@ Win V3, coUnit 1.2.0.0. Картинки документов — снимки �
     <img alt="Матрица причин и следствий сепаратора V-101: 10 причин с тегами, схемами голосования, уставками и задержками, 7 следствий с безопасным состоянием, 49 связей «X», маски wCauseMask, CRC 16#CD40" src="docs/media/shot-cause-effect-compact-light.png" width="100%">
   </picture>
 </p>
-<p align="center"><sub>Снимок сгенерированного <a href="docs/cause_effect_matrix.html">docs/cause_effect_matrix.html</a> (cemgen 0.1.0, ревизия B) в компактном виде для этой страницы: без столбцов «Каналы», «Байпас», «Пусковой обход» и «Σ». Лист A3 целиком: <a href="docs/media/shot-cause-effect-matrix-dark.png">тёмный</a>, <a href="docs/media/shot-cause-effect-matrix-light.png">светлый</a></sub></p>
+<p align="center"><sub>Снимок сгенерированного <a href="docs/cause_effect_matrix.html">docs/cause_effect_matrix.html</a> (cemgen 1.0.0, ревизия B) в компактном виде для этой страницы: без столбцов «Каналы», «Байпас», «Пусковой обход» и «Σ». Лист A3 целиком: <a href="docs/media/shot-cause-effect-matrix-dark.png">тёмный</a>, <a href="docs/media/shot-cause-effect-matrix-light.png">светлый</a></sub></p>
 
 **Голосование при отказах** — как 2oo3 деградирует при каждой политике; эти таблицы целиком
 проверяются тестами на настоящих `F_VoteEval` и `FB_Voting`:
@@ -157,7 +157,7 @@ flowchart LR
   функция работает по оставшимся каналам). «Время назад» у источника времени снимает байпасы и
   обходы и завершает идущие задержки (D-19). Все выходы — разрешения: срабатывание обесточивает.
 - **Время** — только через `PL.I_TimeSource` и `PL.FB_Delay` из
-  [plc-process-lib](https://github.com/<GITHUB_USER>/plc-process-lib): тесты подменяют часы `PL.FB_FakeTime` и проверяют задержки и
+  [plc-process-lib](https://github.com/kr0nsch/plc-process-lib): тесты подменяют часы `PL.FB_FakeTime` и проверяют задержки и
   сроки байпасов «ровно на пороге» за один цикл. `PL.FB_Alarm` сознательно не используется:
   срабатывание ПАЗ — не технологическая тревога ISA-18.2 с квитированием и подавлением (D-01).
 - **Эталонная модель** `cemgen/refmodel.py` — перенос нормативного псевдокода контракта на Python
@@ -220,7 +220,7 @@ cem.csv:28:F: CEM-E016 vote «3oo3» не из списка. Как исправ
 ## CODESYS: сборка и тесты
 
 Нужны Windows, CODESYS 3.5.17.30, Python 3.11+ и соседний репозиторий
-[plc-process-lib](https://github.com/<GITHUB_USER>/plc-process-lib) (`../plc-process-lib` или переменная `PL_REPO`): `cds.py` сам
+[plc-process-lib](https://github.com/kr0nsch/plc-process-lib) (`../plc-process-lib` или переменная `PL_REPO`): `cds.py` сам
 соберёт и установит библиотеку `PL`, если её нет в репозитории библиотек CODESYS. Тесты идут в
 CODESYS Control Win V3, запущенном пользовательским процессом (без прав администратора).
 
@@ -322,13 +322,13 @@ Docs are in Russian.
 
 ## Лицензия
 
-[MIT](LICENSE) © 2026 <ИМЯ ФАМИЛИЯ>
+[MIT](LICENSE) © 2026 kr0nsch
 
 ---
 
 <p align="center"><b>Портфолио АСУ ТП</b></p>
 <table>
-<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/kns-pump-station">03 · kns-pump-station</a><br><sub>флагман: КНС, три насоса с ПЧ, модель, HMI</sub></td></tr>
-<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/kns-port-domestic">04 · kns-port-domestic</a><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-iiot-stack">05 · plc-iiot-stack</a><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
-<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-ci-toolkit">07 · plc-ci-toolkit</a><br><sub>линтеры, сборка CODESYS, тесты, JUnit</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/s7-to-codesys">08 · s7-to-codesys</a><br><sub>конвертер SCL → ST с отчётом о переносе</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/sis-interlock-demo"><b>09 · sis-interlock-demo</b></a><br><sub>ПАЗ: MooN, матрица причин и следствий</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><span data-repo="kns-pump-station">03 · kns-pump-station</span> <sub>(готовится)</sub><br><sub>флагман: КНС, три насоса с ПЧ, модель, HMI</sub></td></tr>
+<tr><td width="33%"><span data-repo="kns-port-domestic">04 · kns-port-domestic</span> <sub>(готовится)</sub><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><span data-repo="plc-iiot-stack">05 · plc-iiot-stack</span> <sub>(готовится)</sub><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><span data-repo="iolistgen">06 · iolistgen</span> <sub>(готовится)</sub><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-ci-toolkit">07 · plc-ci-toolkit</a><br><sub>линтеры, сборка CODESYS, тесты, JUnit</sub></td><td width="33%"><a href="https://github.com/kr0nsch/s7-to-codesys">08 · s7-to-codesys</a><br><sub>конвертер SCL → ST с отчётом о переносе</sub></td><td width="33%"><a href="https://github.com/kr0nsch/sis-interlock-demo"><b>09 · sis-interlock-demo</b></a><br><sub>ПАЗ: MooN, матрица причин и следствий</sub></td></tr>
 </table>

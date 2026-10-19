@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-19
+
+Первый выпуск: логика ПАЗ (голосование MooN, исполнитель матрицы причин и следствий, журнал событий),
+генератор `cemgen` 1.0.0 и демо-объект — сепаратор V-101 (матрица ревизии B, CRC `16#CD40`). Библиотека
+`sis-interlock-demo, 1.0.0.0 (plc-portfolio)` (пространство имён `SIS`) зависит от
+`plc-process-lib, 1.0.0.0 (plc-portfolio)`. Проверено в CODESYS 3.5.17.30 и CODESYS Control Win V3; на
+ПЛК210 не проверялось. Код демонстрационный и не предназначен для систем безопасности.
+
 ### Added
 
 - Раскладка исходников ST в `src/` и `tests/`, её контракт `docs/LAYOUT.md` и инструменты шаблона:
@@ -84,9 +92,10 @@
   (`docs/ASSUMPTIONS.md`); ревизия демо-матрицы — B; SRS, протокол FAT, матрица в документах, README.
 - `PRG_Main` вызывает программу ПАЗ `PRG_Sis`; в демо без ввода-вывода в первом цикле ставит
   нормальные значения входов.
-- `tools/codesys/config.json`: зависимость plc-process-lib (`PL`, версия `*`, сборка из
-  `../plc-process-lib` или `PL_REPO`), библиотека репозитория `sis-interlock-demo` с пространством
-  имён `SIS` без `PRG_Main`.
+- `tools/codesys/config.json`: зависимость plc-process-lib (`PL`, закреплена точная версия `1.0.0.0`,
+  сборка из `../plc-process-lib` или `PL_REPO`), библиотека репозитория `sis-interlock-demo` 1.0.0.0
+  (`released`) с пространством имён `SIS` без `PRG_Main`.
+- Версия пакета и генератора `cemgen` — 1.0.0 (`pyproject.toml`, заголовки сгенерированных файлов).
 - `pyproject.toml`, `requirements-dev.txt`: пакет `cemgen`, `openpyxl`, пути ruff, mypy и pytest.
 - Обоснования статанализа (`tools/check/iec_checker_allow.toml`, `rusty_exclude.txt`,
   `docs/STATIC_ANALYSIS.md`) — под код проекта.

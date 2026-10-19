@@ -69,7 +69,7 @@ def object_header(purpose: list[str]) -> str:
     """Заголовок файла объявления объекта: правило STL001 и дисклеймер (DESIGN.md, 3.1, 10.3)."""
     lines = [f"// Назначение: {purpose[0]}"] + [f"//             {p}" for p in purpose[1:]]
     lines += [
-        f"// Автор:      <ИМЯ ФАМИЛИЯ>; код — генератор {GENERATOR}",
+        f"// Автор:      kr0nsch; код — генератор {GENERATOR}",
         "// Версия:     0.1.0",
         f"// Документ:   {DOC}",
     ]
