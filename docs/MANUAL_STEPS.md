@@ -135,7 +135,7 @@ setx CODESYS_PROFILE "CODESYS V3.5 SP17 Patch 3"
 CODESYS, первый `build`, `check` или `test` соберёт её там (`cds.py library --install`) и повторит
 задание; проверить, что установлено: `python tools\codesys\cds.py deps --check`. Версия — новейшая
 установленная (`"*"` в `tools/codesys/config.json`); для релиза закрепите точную (раздел 7.3).
-Проверено 16.10.2026: plc-process-lib 0.1.0.0, собрана из соседнего репозитория.
+Проверено 19.10.2026: plc-process-lib 1.0.0.0 (закреплена в `config.json`), собрана из соседнего репозитория.
 
 **Полная проверка этого проекта** (перед коммитом и релизом; DESIGN.md, 12.8):
 

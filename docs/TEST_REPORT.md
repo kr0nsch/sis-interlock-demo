@@ -13,12 +13,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 11:41:28. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 11:58:19. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 11:41:28 |
-| Коммит | 59b4cd9-dirty |
+| Дата прогона | 2026-10-19 11:58:19 |
+| Коммит | 03bd1d0-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -323,8 +323,8 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-13; прогон 16.10.2026 после исправлений R-01, R-02 дал те же итоги) и
 после автоснятия пускового обхода (R-12, DESIGN.md 1.2.0). `build` компилирует объекты, достижимые из задач; `check` —
 все объекты раскладки ([MANUAL_STEPS.md](MANUAL_STEPS.md), раздел 5). Библиотеки проекта:
-`#Standard` (Standard 3.5.17.0), plc-process-lib 0.1.0.0 (`plc-process-lib, * (plc-portfolio)`,
-собрана `cds.py` из соседнего репозитория, коммит `20d9528`), в тестовом проекте — coUnit 1.2.0.0;
+`#Standard` (Standard 3.5.17.0), plc-process-lib 1.0.0.0 (`plc-process-lib, 1.0.0.0 (plc-portfolio)`, версия
+закреплена, собрана `cds.py` из соседнего репозитория, коммит `1e0356d`), в тестовом проекте — coUnit 1.2.0.0;
 плейсхолдеры устройства `#IoStandard`, `#3SLicense`, `#CAA Device Diagnosis`, `#BreakpointLogging`.
 
 | Команда | Итог | Примечание |
@@ -338,7 +338,7 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | `cemgen fat-report` | 55 шагов из 55 «соответствует» | [FAT_REPORT.md](FAT_REPORT.md) по `build/test-results.json` этого прогона |
 | мутации (копия репозитория) | поймано 16 из 16 | 16 ошибок в `FB_Voting` и `FB_CauseEffect` по одной, `cds.py test` копии, 19.10.2026: эталон без мутации — 238 из 238, у мутаций упало от 1 до 47 тестов ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-08) |
 | мутации автоснятия обхода (копия репозитория) | поймано 6 из 6 | 6 ошибок автоснятия пускового обхода (O1–O6) в `FB_CauseEffect` и `F_CemCheckCfg` по одной, `cds.py test` копии, 19.10.2026: эталон без мутации — 255 из 255, у мутаций упало от 1 до 21 теста ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-12) |
-| `cds.py deps --check` | есть | plc-process-lib 0.1.0.0, собрана из `../plc-process-lib` @ `20d9528` |
+| `cds.py deps --check` | есть | plc-process-lib 1.0.0.0, собрана из `../plc-process-lib` @ `1e0356d` (19.10.2026: 81 объект, 255 из 255 на выпуске 1.0.0) |
 
 ## Что проверяют тесты
 
