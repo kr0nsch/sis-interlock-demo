@@ -163,7 +163,9 @@ def test_xlsx_errors_e009(tmp_path: Path) -> None:
 
     merged = _xlsx_from_rows(tmp_path / "m.xlsx", [["a", "b"]])
     book = openpyxl.load_workbook(merged)
-    book.active.merge_cells("A1:B1")  # type: ignore[union-attr]
+    sheet = book.active
+    assert sheet is not None
+    sheet.merge_cells("A1:B1")
     book.save(merged)
     with pytest.raises(MatrixFileError) as info:
         read_raw(merged)
