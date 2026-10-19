@@ -33,7 +33,8 @@
 | 2026-10-16 | `run_iec_checker.py` (iec_checker 0.4) | 50 объектов `src/` | ошибок разбора нет; необоснованных 0; обоснованных 296; артефактов сборки 15 (CP3) |
 | 2026-10-16 | `run_iec_checker.py --tests` (iec_checker 0.4) | 80 объектов `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 2104; артефактов сборки 266 |
 | 2026-10-16 | `run_rusty.py` (RuSTy 1.0.6, `plc --check`) | 47 файлов `build/assembled/rusty/`, исключено 34 (`rusty_exclude.txt`) | 0 ошибок; предупреждения E049 (чтение переменных стендов тестами) и E040 (`E_SafeState.Off`) |
-| — | iec_checker 0.4 (CI, Linux) | то же | _перенести из отчёта CI_ |
+| 2026-10-19 | iec_checker 0.4 (CI, Linux) | 81 объект `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 2195; артефактов сборки 290 ([прогон](https://github.com/kr0nsch/sis-interlock-demo/actions/runs/39248635623)) |
+| 2026-10-19 | iec_checker `nightly` (CI, необязательно) | то же | необоснованных 134 — все PLCOPEN-CP17 (неиспользуемый параметр), нового правила nightly-образа; обоснованных 2064. Задание необязательное, разбор CP17 — в планах ([прогон](https://github.com/kr0nsch/sis-interlock-demo/actions/runs/39248635623)) |
 
 Пространство имён `PL.` iec_checker 0.4 после понижения разбирает: `--strip-namespace PL` не нужен
 (DESIGN.md, P-06; docs/ASSUMPTIONS.md).
