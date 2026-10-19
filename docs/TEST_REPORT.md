@@ -13,12 +13,12 @@
 <!-- cds:test-report:begin (раздел обновляет `python tools/codesys/cds.py report`) -->
 ## Последний прогон в CODESYS
 
-Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 10:08:16. Итог: **все тесты пройдены**.
+Проверено в CODESYS 3.5.17.30 / CODESYS Control Win V3 (пользовательский процесс) — 2026-10-19 11:41:28. Итог: **все тесты пройдены**.
 
 | Параметр | Значение |
 |---|---|
-| Дата прогона | 2026-10-19 10:08:16 |
-| Коммит | ce8cf04-dirty |
+| Дата прогона | 2026-10-19 11:41:28 |
+| Коммит | 59b4cd9-dirty |
 | CODESYS | 3.5.17.30 (профиль `CODESYS V3.5 SP17 Patch 3`) |
 | Устройство в проекте | CODESYS Control Win V3 (4096 / 0000 0001 / 3.5.17.30) |
 | Рантайм | CODESYS Control Win V3 (пользовательский процесс) |
@@ -30,7 +30,7 @@
 |---|---|---|---|---|---|
 | `GVL_TestsSis.fbVoteEvalTest` | 7 | 7 | 0 | 0 | пройдено |
 | `GVL_TestsSis.fbVotingTest` | 27 | 27 | 0 | 0 | пройдено |
-| `GVL_TestsSis.fbCauseEffectTest` | 37 | 37 | 0 | 0 | пройдено |
+| `GVL_TestsSis.fbCauseEffectTest` | 42 | 42 | 0 | 0 | пройдено |
 | `GVL_TestsSis.fbSisEventLogTest` | 6 | 6 | 0 | 0 | пройдено |
 | `GVL_TestsSis.fbSisUnitTest` | 5 | 5 | 0 | 0 | пройдено |
 | `GVL_TestsSis.fbSisUtilTest` | 9 | 9 | 0 | 0 | пройдено |
@@ -45,8 +45,9 @@
 | `GVL_TestsTruthTables.fbVoteTableFbSmallTest` | 18 | 18 | 0 | 0 | пройдено |
 | `GVL_TestsGenerated.fbVoteTruthTest` | 36 | 36 | 0 | 0 | пройдено |
 | `GVL_TestsGenerated.fbCemGen01Test` | 40 | 40 | 0 | 0 | пройдено |
-| `GVL_TestsGenerated.fbCemGen02Test` | 31 | 31 | 0 | 0 | пройдено |
-| **Всего** | 238 | 238 | 0 | 0 | **пройдено** |
+| `GVL_TestsGenerated.fbCemGen02Test` | 40 | 40 | 0 | 0 | пройдено |
+| `GVL_TestsGenerated.fbCemGen03Test` | 3 | 3 | 0 | 0 | пройдено |
+| **Всего** | 255 | 255 | 0 | 0 | **пройдено** |
 
 ### Результаты тестов
 
@@ -123,6 +124,11 @@
 | `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ReRequestAfterExpiryFullTime` | пройден |
 | `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_CancelAndRequestRestarts` | пройден |
 | `GVL_TestsSis.fbCauseEffectTest` | `Cem_NoTimeSource_UsesSystemTime` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ClearsExactlyAtConfirm` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ChatteringNotCleared` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ReRequestRestartsConfirm` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_TimeBackwards_DuringConfirmEndsOverride` | пройден |
+| `GVL_TestsSis.fbCauseEffectTest` | `Cem_Override_ExpiryWinsTieWithConfirm` | пройден |
 | `GVL_TestsSis.fbSisEventLogTest` | `Log_Ring_OverwritesOldest` | пройден |
 | `GVL_TestsSis.fbSisEventLogTest` | `Log_Seq_IncrementsAndWraps` | пройден |
 | `GVL_TestsSis.fbSisEventLogTest` | `Log_GetEventBeyondCount_Empty` | пройден |
@@ -228,6 +234,10 @@
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Demand_TripsOwnEffects` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Delay_TripsExactlyAtDelay` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_ClearsAfterConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_DemandBackRestartsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_ExpiryBoundsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Override_ClearedThenDelayTrips` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Reset_OnlyAfterClear` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101ChannelInvalid_MatchesPolicy` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_PSLL101Bypass_ExpiresBackToVoting` | пройден |
@@ -240,6 +250,10 @@
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Demand_TripsOwnEffects` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Delay_TripsExactlyAtDelay` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_ClearsAfterConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_DemandBackRestartsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_ExpiryBoundsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Override_ClearedThenDelayTrips` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Reset_OnlyAfterClear` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102ChannelInvalid_MatchesPolicy` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_LSLL102Bypass_ExpiresBackToVoting` | пройден |
@@ -251,14 +265,14 @@
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_TSHH103Bypass_ExpiresBackToVoting` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Demand_TripsOwnEffects` | пройден |
 | `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Delay_TripsExactlyAtDelay` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Override_Denied` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Reset_OnlyAfterClear` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104ChannelInvalid_MatchesPolicy` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_ASHH104Bypass_ExpiresBackToVoting` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Demand_TripsOwnEffects` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Override_Denied` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105Reset_OnlyAfterClear` | пройден |
-| `GVL_TestsGenerated.fbCemGen01Test` | `Matrix_BSH105ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ASHH104Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ASHH104Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ASHH104ChannelInvalid_MatchesPolicy` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_ASHH104Bypass_ExpiresBackToVoting` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105Demand_TripsOwnEffects` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105Override_Denied` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105Reset_OnlyAfterClear` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105ChannelInvalid_MatchesPolicy` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_BSH105Bypass_ExpiresBackToVoting` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Demand_TripsOwnEffects` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_HS106Override_Denied` | пройден |
@@ -268,6 +282,10 @@
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Demand_TripsOwnEffects` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Delay_TripsExactlyAtDelay` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_ExpiresThenTrips` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_ClearsAfterConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_DemandBackRestartsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_ExpiryBoundsConfirm` | пройден |
+| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Override_ClearedThenDelayTrips` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Reset_OnlyAfterClear` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108ChannelInvalid_MatchesPolicy` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_PSLL108Bypass_ExpiresBackToVoting` | пройден |
@@ -287,9 +305,9 @@
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutHS106ThenPSLL108_RecordsFirst` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutPSLL108ThenESL109_RecordsFirst` | пройден |
 | `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutESL109ThenPSHH101_RecordsFirst` | пройден |
-| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_Start_TrippedUntilReset` | пройден |
-| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_FirstOutSimultaneous_LowestIndex` | пройден |
-| `GVL_TestsGenerated.fbCemGen02Test` | `Matrix_GeneratedCfg_PassesChecks` | пройден |
+| `GVL_TestsGenerated.fbCemGen03Test` | `Matrix_Start_TrippedUntilReset` | пройден |
+| `GVL_TestsGenerated.fbCemGen03Test` | `Matrix_FirstOutSimultaneous_LowestIndex` | пройден |
+| `GVL_TestsGenerated.fbCemGen03Test` | `Matrix_GeneratedCfg_PassesChecks` | пройден |
 
 ### Упавшие тесты
 
@@ -302,7 +320,8 @@ _Нет._
 
 CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально, 19.10.2026, после интеграции кода
 логики ПАЗ и сгенерированного по матрице и после исправлений ревизии функциональной безопасности
-([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-13; прогон 16.10.2026 после исправлений R-01, R-02 дал те же итоги). `build` компилирует объекты, достижимые из задач; `check` —
+([ASSUMPTIONS.md](ASSUMPTIONS.md), R-01…R-13; прогон 16.10.2026 после исправлений R-01, R-02 дал те же итоги) и
+после автоснятия пускового обхода (R-12, DESIGN.md 1.2.0). `build` компилирует объекты, достижимые из задач; `check` —
 все объекты раскладки ([MANUAL_STEPS.md](MANUAL_STEPS.md), раздел 5). Библиотеки проекта:
 `#Standard` (Standard 3.5.17.0), plc-process-lib 0.1.0.0 (`plc-process-lib, * (plc-portfolio)`,
 собрана `cds.py` из соседнего репозитория, коммит `20d9528`), в тестовом проекте — coUnit 1.2.0.0;
@@ -311,13 +330,14 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | Команда | Итог | Примечание |
 |---|---|---|
 | `cds.py build` | 0 ошибок, 0 предупреждений | рабочий проект: MainTask 20 мс → `PRG_Main` → `PRG_Sis` |
-| `cds.py build --tests` | 0 ошибок, 0 предупреждений | тестовый проект: TestTask 10 мс → `PRG_Tests`; код 1,39 МБ, глобальные данные 154 МБ |
+| `cds.py build --tests` | 0 ошибок, 0 предупреждений | тестовый проект: TestTask 10 мс → `PRG_Tests`; код 1,39 МБ, глобальные данные 154 МБ (замер 16.10.2026; с R-12 добавились 12 экземпляров стенда `FB_SisHarness` — по экземпляру на сценарий, размер не перемерялся) |
 | `cds.py check` | 0 ошибок, 0 предупреждений | 50 объектов `src/` (включая `PRG_Main`) |
-| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 80 объектов `src/` и `tests/` |
-| `cds.py test` | 238 из 238 | раздел выше; все наборы завершились к первому опросу. До исправлений ревизии новые тесты R-01, R-02 упали — 5 из 238 (тесты сначала, 16.10.2026) |
-| `cds.py roundtrip` | без диффа (711 файлов), повторный импорт — 0 изменений | импорт в чистый проект → экспорт → побайтное сравнение |
+| `cds.py check --tests` | 0 ошибок, 0 предупреждений | 81 объект `src/` и `tests/` |
+| `cds.py test` | 255 из 255 | раздел выше; все наборы завершились к первому опросу. До исправлений ревизии новые тесты R-01, R-02 упали — 5 из 238 (тесты сначала, 16.10.2026) |
+| `cds.py roundtrip` | без диффа (747 файлов), повторный импорт — 0 изменений | импорт в чистый проект → экспорт → побайтное сравнение |
 | `cemgen fat-report` | 55 шагов из 55 «соответствует» | [FAT_REPORT.md](FAT_REPORT.md) по `build/test-results.json` этого прогона |
 | мутации (копия репозитория) | поймано 16 из 16 | 16 ошибок в `FB_Voting` и `FB_CauseEffect` по одной, `cds.py test` копии, 19.10.2026: эталон без мутации — 238 из 238, у мутаций упало от 1 до 47 тестов ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-08) |
+| мутации автоснятия обхода (копия репозитория) | поймано 6 из 6 | 6 ошибок автоснятия пускового обхода (O1–O6) в `FB_CauseEffect` и `F_CemCheckCfg` по одной, `cds.py test` копии, 19.10.2026: эталон без мутации — 255 из 255, у мутаций упало от 1 до 21 теста ([ASSUMPTIONS.md](ASSUMPTIONS.md), R-12) |
 | `cds.py deps --check` | есть | plc-process-lib 0.1.0.0, собрана из `../plc-process-lib` @ `20d9528` |
 
 ## Что проверяют тесты
@@ -326,14 +346,14 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 |---|---:|---|
 | `FB_VoteEval_Test` | 7 | `F_VoteEval`: схема вне перечисления и `None` — срабатывание; политика вне перечисления; `NotUsed` внутри N — недостоверен; 2oo3 срабатывает на втором требовании; каналы за пределами N не действуют; счётчики состояний; функции схем (N, M) |
 | `FB_Voting_Test` | 27 | уставки включительно (High, Low), гистерезис, NaN и ±Inf — недостоверно, инверсия DI, события достоверности; байпас: истечение ровно в срок, остаток, предел числа (младший канал выигрывает), без ключа, снятие ключа, повторный запрос, нулевой срок, события; рассогласование: ровно после задержки, «на пределе» — нет, исключает байпасированные и недостоверные, отключение, не влияет на срабатывание; ошибка конфигурации снимает байпасы; неиспользуемые каналы; «время назад» заканчивает байпас (D-19); системное время по умолчанию; проверка конфигурации — каждое правило; DegradeAvailable: 2oo3 как 2oo2 |
-| `FB_CauseEffect_Test` | 37 | конфигурация по умолчанию и неверная CRC — срабатывание всего; маска за пределами числа причин; восстановление конфигурации требует сброса; старт в сработавшем и без; задержка ровно, короткий импульс, нулевая задержка; фиксация; сброс: запрещён при требовании и во время отсчёта, разрешён при обходе, кнопка по фронту, зажатая при старте кнопка; первопричина: самая ранняя, одновременные (младшая и маска), метка времени от источника, очистка сбросом; обходы: истечение ровно, запрет, без ключа, отмена, повтор, новый обход сразу после истечения и после снятия в том же вызове — полный срок, пусковой по маске, задержка идёт во время обхода; выключенная причина, неиспользуемые следствия, очистка команд, порядок событий в вызове, событие срабатывания следствия с причиной; проверка конфигурации — каждое правило; «время назад»: идущая задержка срабатывает, обход снимается (D-19); системное время по умолчанию |
+| `FB_CauseEffect_Test` | 42 | конфигурация по умолчанию и неверная CRC — срабатывание всего; маска за пределами числа причин; восстановление конфигурации требует сброса; старт в сработавшем и без; задержка ровно, короткий импульс, нулевая задержка; фиксация; сброс: запрещён при требовании и во время отсчёта, разрешён при обходе, кнопка по фронту, зажатая при старте кнопка; первопричина: самая ранняя, одновременные (младшая и маска), метка времени от источника, очистка сбросом; обходы: истечение ровно, запрет, без ключа, отмена, повтор, новый обход сразу после истечения и после снятия в том же вызове — полный срок, пусковой по маске, задержка идёт во время обхода; выключенная причина, неиспользуемые следствия, очистка команд, порядок событий в вызове, событие срабатывания следствия с причиной; проверка конфигурации — каждое правило; «время назад»: идущая задержка срабатывает, обход снимается (D-19); системное время по умолчанию; автоснятие обхода при норме (D-20): ровно по подтверждению и полная задержка нового требования, дребезг требования не снимает обход — его снимает срок, новый обход перезапускает подтверждение (повторный запрос — нет), срок и подтверждение в одном вызове — `OverrideExpired`, «время назад» во время подтверждения — `OverrideExpired` без позднего `OverrideCleared` |
 | `FB_SisEventLog_Test` | 6 | кольцо затирает самое старое, номер растёт и переходит через `16#FFFFFFFF`, чтение за пределами — пустая запись, очистка сохраняет номер, `SIZEOF(ST_SisEvent) = 24`, запись через интерфейс сохраняет поля |
 | `FB_SisUnit_Test` | 5 | внешняя причина без голосования, выключенная причина не вызывает группу, ошибка конфигурации группы — срабатывает только её причина, один источник времени для всех ФБ, порядок событий (голосование раньше матрицы) |
 | `FB_SisUtil_Test` | 9 | CRC-16/CCITT-FALSE: контрольное значение `16#29B1` и CRC демо-матрицы `16#CD40`; функции битов и масок за пределами; NE 43: 3,6 и 21,0 мА — недостоверно, 3,61 и 20,99 мА — достоверно, NaN; масштабирование мА → инж. ед.; младший установленный бит; запись события без приёмника |
 | `FB_Common_Test` | 4 | маски помещаются в `WORD`; конфигурации и состояния по умолчанию — безопасные; коды перечислений совпадают с контрактом |
 | `FB_VoteTruth_Test` (генерируется `cemgen`) | 36 | 12 таблиц `F_VoteEval` (300 строк) и 24 таблицы `FB_Voting` (3888 строк) по эталонной модели `cemgen` |
 | `FB_VoteTable*_Test` (8 наборов, `tools_project`) | 36 | те же 4188 строк по независимой модели `tools_project/vote_model.py`, по ассерту на строку |
-| `FB_CemGen01_Test`, `FB_CemGen02_Test` (генерируются `cemgen`) | 71 | на каждую причину V-101: требование отключает ровно свои следствия (10), задержка «до и ровно» (8), пусковой обход истекает (3) или отклонён (7), сброс только после снятия (10), отказ канала по политике (10), байпас истекает (8) или запрещён (2); первопричина для 10 пар причин, одновременная фиксация, старт ПЛК, проверка сгенерированной конфигурации |
+| `FB_CemGen01_Test` … `FB_CemGen03_Test` (генерируются `cemgen`) | 83 | на каждую причину V-101: требование отключает ровно свои следствия (10), задержка «до и ровно» (8), пусковой обход истекает (3) или отклонён (7), снимается ровно по подтверждению нормы (3), подтверждение перезапускается требованием (3), срок ограничивает подтверждение (3), после автоснятия новое требование — через полную задержку (3), сброс только после снятия (10), отказ канала по политике (10), байпас истекает (8) или запрещён (2); первопричина для 10 пар причин, одновременная фиксация, старт ПЛК, проверка сгенерированной конфигурации |
 
 ## Проверки без CODESYS
 
@@ -342,11 +362,11 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 | Проверка | Итог | Примечание |
 |---|---|---|
 | `ruff check`, `ruff format --check`, `mypy` | пройдено | 77 файлов Python; mypy (strict) — 58 модулей без замечаний |
-| `pytest` | 843 пройдено | `tools/tests` 528, `tools/project_checks` 106, `tools_project` 13, `pytests` (cemgen) 196; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
-| `cemgen validate --strict` (CSV и XLSX) | 0 ошибок, 0 предупреждений | `SIS-V101-CEM`, ревизия A, 10 причин, 7 следствий, CRC `16#CD40` |
-| `cemgen generate --check` | совпадает (251 файл) | ST, тесты, документы по матрице и раздел 3 `SRS.md` |
+| `pytest` | 858 пройдено | `tools/tests` 528, `tools/project_checks` 107, `tools_project` 13, `pytests` (cemgen) 210; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
+| `cemgen validate --strict` (CSV и XLSX) | 0 ошибок, 0 предупреждений | `SIS-V101-CEM`, ревизия B, 10 причин, 7 следствий, CRC `16#CD40` |
+| `cemgen generate --check` | совпадает (277 файлов) | ST, тесты, документы по матрице и раздел 3 `SRS.md` |
 | `gen_voting_tests.py --check` | совпадает | 8 наборов, 36 тестов, 4188 ассертов |
-| `tools/assemble.py --tests` | пройдено | 80 объектов |
-| `tools/check/st_lint.py --strict` | пройдено | 711 файлов, 0 замечаний |
-| iec_checker 0.4 (`run_iec_checker.py --tests`) | пройдено | 80 объектов, ошибок разбора нет; необоснованных находок 0 (обоснованных 2104) — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
-| RuSTy 1.0.6 (`run_rusty.py`) | пройдено | 47 файлов, 34 исключены (`tools/check/rusty_exclude.txt`: зависят от `PL.*`), 0 ошибок |
+| `tools/assemble.py --tests` | пройдено | 81 объект |
+| `tools/check/st_lint.py --strict` | пройдено | 747 файлов, 0 замечаний |
+| iec_checker 0.4 (`run_iec_checker.py --tests`) | пройдено | 81 объект, ошибок разбора нет; необоснованных находок 0 (обоснованных 2195) — разбор в [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) |
+| RuSTy 1.0.6 (`run_rusty.py`) | пройдено | 47 файлов, 35 исключены (`tools/check/rusty_exclude.txt`: зависят от `PL.*`), 0 ошибок |

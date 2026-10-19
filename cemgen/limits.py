@@ -66,5 +66,6 @@ TESTS_PER_SUITE_MAX = 40  # тестов в наборе FB_CemGenNN_Test
 # --- значения по умолчанию формата cem/1 (DESIGN.md, 9.2) -------------------------------------
 DEFAULT_TEST_STEP_MS = 100
 DEFAULT_DISCREPANCY_DELAY_MS = 5000
+DEFAULT_OVERRIDE_CLEAR_MS = 30_000  # override_clear: подтверждение нормы для автоснятия обхода (6.4)
 
 ST_LINE_MAX = 120  # STL003

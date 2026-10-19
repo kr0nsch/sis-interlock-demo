@@ -81,6 +81,7 @@ class Scenario:
         self.v = case.harness
         self.delta = matrix.header.test_step_ms
         self.t0: int | None = None
+        self.t0_label = "t0"  # обозначение момента отсчёта в комментариях: t0, t2
         self.emit(f"coUnit.TEST('{case.name}');")
 
     # --- служебное ---------------------------------------------------------------------------
@@ -97,7 +98,8 @@ class Scenario:
         if self.t0 is None:
             return ""
         delta = (self.h.now() - self.t0) // NS_PER_MS
-        return "// t0" if delta == 0 else f"// t0 + {format_duration_ru(delta)}"
+        label = self.t0_label
+        return f"// {label}" if delta == 0 else f"// {label} + {format_duration_ru(delta)}"
 
     def finish(self) -> TestCase:
         self.emit("coUnit.TEST_FINISHED();")
@@ -149,14 +151,15 @@ class Scenario:
     def channel_invalid(self, cause: Cause, channel: int) -> None:
         self.set_io([channel_invalid(cause, channel)], self._ai_note(cause))
 
-    def cycle(self, mark_t0: bool = False) -> None:
+    def cycle(self, mark_t0: bool = False, label: str = "t0") -> None:
         self.h.cycle()
         if mark_t0:
             self.t0 = self.h.now()
+            self.t0_label = label
         self.emit(f"{self.v}.Cycle();   {self._at()}".rstrip())
 
     def capture_t0(self) -> None:
-        self.local("ltT0", "LTIME", "момент t0 по подменному времени стенда")
+        self.local("ltT0", "LTIME", f"момент {self.t0_label} по подменному времени стенда")
         self.t0 = self.h.now()
         self.emit(f"ltT0 := {self.v}.Now();")
 
@@ -238,9 +241,18 @@ class Scenario:
             text = f"{tag}: {effect.tag} {state}{phase}"
             self.assert_bool(f"{self.v}.stIo.{effect.io_field}", value, text)
 
-    def assert_word(self, actual: str, value: int, message: str) -> None:
-        self.emit(f"AssertEquals_WORD(Expected := {st_word(value)}, Actual := {actual},")
+    def _assert_equals(self, fn: str, expected: str, actual: str, message: str) -> None:
+        """``AssertEquals_*`` на двух строках, на трёх — если первая длиннее предела STL003."""
+        first = f"{fn}(Expected := {expected}, Actual := {actual},"
+        if len(first) <= limits.ST_LINE_MAX:
+            self.emit(first)
+        else:
+            self.emit(f"{fn}(Expected := {expected},")
+            self.emit(f"    Actual := {actual},")
         self.emit(f"    Message := '{message}');")
+
+    def assert_word(self, actual: str, value: int, message: str) -> None:
+        self._assert_equals("AssertEquals_WORD", st_word(value), actual, message)
 
     def cause_code(self, value: int) -> str:
         if value == limits.SIS_FIRST_OUT_NONE:
@@ -263,8 +275,7 @@ class Scenario:
         self.emit(f"    Message := '{message}');")
 
     def assert_time(self, actual: str, value_ms: int, message: str) -> None:
-        self.emit(f"AssertEquals_TIME(Expected := {st_time(value_ms)}, Actual := {actual},")
-        self.emit(f"    Message := '{message}');")
+        self._assert_equals("AssertEquals_TIME", st_time(value_ms), actual, message)
 
     def assert_since_t0(self, actual: str, value_ns: int, message: str) -> None:
         if self.t0 is None:
@@ -281,12 +292,44 @@ class Scenario:
         self.emit(f"AssertTrue(Condition := {self.v}.HasEvent(eKind := {st_enum(kind)},")
         self.emit(f"    uiCause := GVL_SisCfg.{cause.const_name}), Message := '{message}');")
 
+    def assert_no_event_since_mark(self, kind: EventKind, cause: Cause, message: str) -> None:
+        if self.h.has_event(kind, cause.no):
+            raise self.fail(f"модель: лишнее событие {kind.name} причины {cause.tag}")
+        self.emit(f"AssertFalse(Condition := {self.v}.HasEvent(eKind := {st_enum(kind)},")
+        self.emit(f"    uiCause := GVL_SisCfg.{cause.const_name}), Message := '{message}');")
+
     # --- общие проверки ------------------------------------------------------------------------------
     def assert_latched(self, tag: str, phase: str) -> None:
         self.assert_word(f"{self.v}.fbApp.stCemSts.wCauseLatched", self.sts.latched, f"{tag}: latched causes{phase}")
 
     def assert_first_out(self, tag: str, phase: str = "") -> None:
         self.assert_cause(f"{self.v}.fbApp.stCemSts.uiFirstOut", self.sts.first_out, f"{tag}: first-out{phase}")
+
+    def assert_overridden(self, tag: str, text: str) -> None:
+        self.assert_word(f"{self.v}.fbApp.stCemSts.wOverridden", self.sts.overridden, f"{tag}: {text}")
+
+    def assert_override_remain(self, cause: Cause, message: str) -> None:
+        self.assert_time(
+            f"{self.v}.fbApp.stCemSts.atOverrideRemain[GVL_SisCfg.{cause.const_name}]",
+            self.sts.override_remain_ms[cause.no - 1],
+            f"{cause.tag}: {message}",
+        )
+
+    def assert_clear_remain(self, cause: Cause, text: str) -> None:
+        self.assert_time(
+            f"{self.v}.fbApp.stCemSts.atOverrideClearRemain[GVL_SisCfg.{cause.const_name}]",
+            self.sts.override_clear_remain_ms[cause.no - 1],
+            f"{cause.tag}: {text}",
+        )
+
+    def start_override_with_demand(self, cause: Cause) -> None:
+        """Ключ разрешения обходов, запрос обхода и требование в одном вызове t0 — как при пуске."""
+        self.keys(False, True)
+        self.override_request(cause)
+        self.demand(cause)
+        self.cycle(mark_t0=True)
+        if not self.sts.overridden & cause.bit:
+            raise self.fail("модель: обход не принят")
 
 
 # --- тесты на причину ------------------------------------------------------------------------------------
@@ -402,6 +445,163 @@ def test_override_expires(m: Matrix, c: Cause) -> TestCase:
     s.assert_latched(c.tag, " after override expired")
     s.assert_first_out(c.tag)
     s.assert_effects(c.tag, sorted(c.effects), " after override expired")
+    return s.finish()
+
+
+def test_override_clears(m: Matrix, c: Cause) -> TestCase:
+    clear = format_duration_ru(c.override_clear_ms)
+    s = _new(
+        m,
+        f"Matrix_{c.tag}Override_ClearsAfterConfirm",
+        f"Причина {c.no} {c.tag}: пусковой обход и требование в t0; норма с t1 = t0 + шаг; на t1 + {clear} − шаг "
+        f"обход действует; ровно на t1 + {clear} (подтверждение нормы) — OverrideCleared, обхода нет, причина не "
+        "зафиксирована, следствия под напряжением (R-12).",
+        "override",
+        c,
+    )
+    s.arm()
+    s.start_override_with_demand(c)
+    s.normal(c)
+    s.step()  # t1: требования нет — подтверждение нормы с этого вызова
+    s.run_until_before(c.override_clear_ms)
+    if not s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход снят раньше подтверждения нормы")
+    s.assert_overridden(c.tag, "override active one step before confirm")
+    s.assert_clear_remain(c, "one step of confirm left")
+    s.mark_events()
+    s.step()
+    s.assert_event_since_mark(EventKind.OVERRIDE_CLEARED, c, f"{c.tag}: OverrideCleared logged")
+    if s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход не снят ровно по подтверждению нормы")
+    s.assert_overridden(c.tag, "override cleared after confirm")
+    s.assert_override_remain(c, "no override left")
+    s.assert_latched(c.tag, " after override cleared")
+    s.assert_effects(c.tag, sorted(c.effects), " after clear")
+    return s.finish()
+
+
+def test_override_demand_back(m: Matrix, c: Cause) -> TestCase:
+    clear = format_duration_ru(c.override_clear_ms)
+    s = _new(
+        m,
+        f"Matrix_{c.tag}Override_DemandBackRestartsConfirm",
+        f"Причина {c.no} {c.tag}: пусковой обход и требование в t0; норма с t1; ровно на t1 + {clear}, когда обход "
+        "снялся бы, требование снова — обход действует, подтверждение нормы сброшено; норма с t2; на "
+        f"t2 + {clear} − шаг обход действует; на t2 + {clear} — OverrideCleared.",
+        "override",
+        c,
+    )
+    s.arm()
+    s.start_override_with_demand(c)
+    s.normal(c)
+    s.step()  # t1
+    s.run_until_before(c.override_clear_ms)
+    s.assert_overridden(c.tag, "override active one step before confirm")
+    s.assert_clear_remain(c, "one step of confirm left")
+    s.demand(c)
+    s.step()  # t1 + подтверждение: требование снова — отсчёт начнётся заново
+    if not s.sts.overridden & c.bit or s.sts.override_clear_remain_ms[c.no - 1] != 0:
+        raise s.fail("модель: требование не сбросило подтверждение нормы")
+    s.assert_overridden(c.tag, "override kept, demand back at confirm time")
+    s.assert_clear_remain(c, "confirm reset by demand")
+    s.normal(c)
+    s.step()  # t2
+    s.run_until_before(c.override_clear_ms)
+    if not s.sts.overridden & c.bit:
+        raise s.fail("модель: обход снят раньше нового подтверждения")
+    s.assert_overridden(c.tag, "override active one step before new confirm")
+    s.assert_clear_remain(c, "one step of new confirm left")
+    s.mark_events()
+    s.step()
+    s.assert_event_since_mark(EventKind.OVERRIDE_CLEARED, c, f"{c.tag}: OverrideCleared after new confirm")
+    if s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход не снят по новому подтверждению")
+    s.assert_overridden(c.tag, "override cleared after new confirm")
+    s.assert_latched(c.tag, " after override cleared")
+    return s.finish()
+
+
+def test_override_expiry_bounds(m: Matrix, c: Cause) -> TestCase:
+    total = c.override_time_ms
+    clear = c.override_clear_ms
+    s = _new(
+        m,
+        f"Matrix_{c.tag}Override_ExpiryBoundsConfirm",
+        f"Причина {c.no} {c.tag}: пусковой обход и требование в t0; норма с t0 + "
+        f"{format_duration_ru(total - clear)} + шаг — подтверждение ({format_duration_ru(clear)}) закончилось бы "
+        f"после срока; на t0 + {format_duration_ru(total)} − шаг обход действует; ровно на t0 + "
+        f"{format_duration_ru(total)} — OverrideExpired (срок — верхняя граница), OverrideCleared нет, причина не "
+        "зафиксирована (требования нет).",
+        "override",
+        c,
+    )
+    s.arm()
+    s.start_override_with_demand(c)
+    s.run(total - clear)  # требование ещё есть
+    s.normal(c)
+    if clear >= 2 * s.delta:
+        s.step()  # первый вызов без требования: подтверждение закончилось бы на t0 + срок + шаг
+        s.run(clear - 2 * s.delta)
+    if not s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход не действует до конца срока")
+    s.assert_overridden(c.tag, "override active one step before expiry")
+    s.assert_override_remain(c, "one step of override left")
+    s.assert_clear_remain(c, "confirm still running before expiry")
+    s.mark_events()
+    s.step()
+    s.assert_event_since_mark(EventKind.OVERRIDE_EXPIRED, c, f"{c.tag}: OverrideExpired at max time")
+    s.assert_no_event_since_mark(EventKind.OVERRIDE_CLEARED, c, f"{c.tag}: no OverrideCleared")
+    if s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход не истёк по сроку или причина зафиксирована без требования")
+    s.assert_overridden(c.tag, "override expired at max time")
+    s.assert_latched(c.tag, " at expiry without demand")
+    s.assert_effects(c.tag, sorted(c.effects), " at expiry")
+    return s.finish()
+
+
+def test_override_cleared_then_delay(m: Matrix, c: Cause) -> TestCase:
+    delay = format_duration_ru(c.delay_ms)
+    s = _new(
+        m,
+        f"Matrix_{c.tag}Override_ClearedThenDelayTrips",
+        f"Причина {c.no} {c.tag} с задержкой {delay}: пусковой обход и требование в t0; через {delay} причина "
+        f"активна под обходом, не зафиксирована; норма; через {format_duration_ru(c.override_clear_ms)} — "
+        f"OverrideCleared; требование в t2 — на t2 + {delay} − шаг не зафиксирована (задержка отсчитывается "
+        f"заново), на t2 + {delay} — зафиксирована, первопричина {c.tag}.",
+        "override",
+        c,
+    )
+    s.arm()
+    s.start_override_with_demand(c)
+    s.run(c.delay_ms)
+    if not s.sts.active & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: причина не активна под обходом или зафиксирована")
+    s.assert_word(f"{s.v}.fbApp.stCemSts.wCauseActive", s.sts.active, f"{c.tag}: active under override")
+    s.assert_latched(c.tag, " under override")
+    s.normal(c)
+    s.step()  # t1: требования нет
+    s.mark_events()
+    s.run(c.override_clear_ms)
+    s.assert_event_since_mark(EventKind.OVERRIDE_CLEARED, c, f"{c.tag}: OverrideCleared logged")
+    if s.sts.overridden & c.bit or s.sts.latched & c.bit:
+        raise s.fail("модель: обход не снят по подтверждению нормы")
+    s.assert_overridden(c.tag, "override cleared after confirm")
+    s.assert_effects(c.tag, sorted(c.effects), " after clear")
+    s.demand(c)
+    s.cycle(mark_t0=True, label="t2")
+    s.capture_t0()
+    s.run_until_before(c.delay_ms)
+    if s.sts.latched & c.bit:
+        raise s.fail("модель: после автоснятия причина зафиксирована раньше задержки")
+    s.assert_latched(c.tag, " before delay after override cleared")
+    s.assert_effects(c.tag, sorted(c.effects), " before delay")
+    s.step()
+    if not s.sts.latched & c.bit:
+        raise s.fail("модель: после автоснятия причина не зафиксирована через задержку")
+    s.assert_latched(c.tag, " exactly at delay")
+    s.assert_first_out(c.tag)
+    s.assert_since_t0(f"{s.v}.fbApp.stCemSts.ltFirstOut", s.sts.lt_first_out, f"{c.tag}: first-out at t2 + delay")
+    s.assert_effects(c.tag, sorted(c.effects), " at delay")
     return s.finish()
 
 
@@ -703,7 +903,15 @@ def build_cases(matrix: Matrix) -> list[TestCase]:
         cases.append(test_demand(matrix, c))
         if c.delay_ms > 0:
             cases.append(test_delay(matrix, c))
-        cases.append(test_override_expires(matrix, c) if c.override else test_override_denied(matrix, c))
+        if c.override:
+            cases.append(test_override_expires(matrix, c))
+            cases.append(test_override_clears(matrix, c))
+            cases.append(test_override_demand_back(matrix, c))
+            cases.append(test_override_expiry_bounds(matrix, c))
+            if c.delay_ms > 0:
+                cases.append(test_override_cleared_then_delay(matrix, c))
+        else:
+            cases.append(test_override_denied(matrix, c))
         cases.append(test_reset(matrix, c))
         if c.is_voting:
             cases.append(test_channel_invalid(matrix, c))

@@ -2,7 +2,8 @@ coUnit.TEST('Cem_Override_ReRequestAfterExpiryFullTime');
 fbRig.stCfg := CfgBase();
 fbRig.Cycle();
 fbRig.stCmd.wOverrideReq := 16#0004;
-fbRig.Step(tStep := T#100MS);                                   // t1: обход причины 3 (10 с)
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);                                   // t1: обход причины 3 (10 с) и требование
 fbRig.Run(tDuration := T#10S, tStep := T#1S);                   // t1 + 10 с
 AssertEquals_WORD(Expected := 0, Actual := fbRig.fbCem.stSts.wOverridden, Message := 't1 + 10 s: expired');
 fbRig.stCmd.wOverrideReq := 16#0004;

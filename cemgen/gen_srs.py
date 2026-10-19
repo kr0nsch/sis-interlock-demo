@@ -140,8 +140,10 @@ def _override(matrix: Matrix, cause: Cause) -> str:
     key = matrix.header.override_permit_tag
     permit = f"при ключе {key}" if key else "по разрешению оператора"
     return (
-        f"до {override_text(cause)} {permit}: маскирует только фиксацию срабатывания, по истечении — срабатывание, "
-        "если требование есть; повторный запрос действующего обхода не продлевает его"
+        f"до {format_duration_ru(cause.override_time_ms)} {permit}: маскирует только фиксацию срабатывания; "
+        f"снимается автоматически, когда требования нет непрерывно {format_duration_ru(cause.override_clear_ms)} "
+        "(подтверждение нормы, событие OverrideCleared); по истечении срока — срабатывание, если требование есть; "
+        "повторный запрос действующего обхода не продлевает его"
     )
 
 

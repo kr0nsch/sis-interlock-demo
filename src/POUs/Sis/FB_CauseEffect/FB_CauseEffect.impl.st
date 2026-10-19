@@ -136,9 +136,11 @@ ELSE
             stCause := stCfg.astCause[uiI];
             IF stCause.xEnable AND stCause.xOverrideAllowed AND stCause.tOverrideMax > T#0S AND xOverridePermit THEN
                 wOverridden := wOverridden OR F_SisBitMask(uiIdx := uiI);
-                // срок нового обхода — от ltNow этого вызова, даже если прежний истёк в прошлом вызове
-                // или снят в этом: иначе таймер не увидел бы смены входа (6.4, п. 3; D-13)
+                // срок нового обхода и подтверждение нормы — от ltNow этого вызова, даже если прежний
+                // истёк в прошлом вызове или снят в этом: иначе таймеры не увидели бы смены входа
+                // (6.4, п. 3; D-13)
                 afbOverride[uiI].Preset(xValue := FALSE);
+                afbOvrClear[uiI].Preset(xValue := FALSE);
                 F_SisLogEvent(itfLog := itfLog, ltTime := ltNow, eKind := E_SisEventKind.OverrideOn,
                     uiCause := uiI, uiEffect := 0, uiChannel := 0, rValue := 0.0);
             ELSE
@@ -148,8 +150,9 @@ ELSE
         END_IF
     END_FOR
 END_IF
-// 4.4 Таймеры (и при ошибке конфигурации — со снятым входом); обход, принятый в этом вызове,
-//     отсчитывается от ltNow этого вызова и в нём же не истекает
+// 4.4 Срок (таймеры вызываются и при ошибке конфигурации — со снятым входом); обход, принятый в
+//     этом вызове, отсчитывается от ltNow этого вызова и в нём же не истекает. Срок — верхняя
+//     граница: в одном вызове он проверяется раньше подтверждения нормы
 FOR uiI := 1 TO GVL_Const.SIS_CAUSES_MAX DO
     stCause := stCfg.astCause[uiI];
     afbOverride[uiI](xIn := F_SisBit(wMask := wOverridden, uiIdx := uiI), tOnDelay := stCause.tOverrideMax,
@@ -160,15 +163,31 @@ FOR uiI := 1 TO GVL_Const.SIS_CAUSES_MAX DO
             uiEffect := 0, uiChannel := 0, rValue := 0.0);
     END_IF
 END_FOR
-// 4.5 Импульсы HMI обработаны; 4.6 остаток обходов
+// 4.5 Автоснятие при норме (R-12, D-20): сырого требования нет непрерывно tOverrideClear; каждое
+//     появление требования перезапускает отсчёт. Обход, принятый в этом вызове, в нём же не
+//     снимается (tOverrideClear > T#0S проверяет F_CemCheckCfg)
+FOR uiI := 1 TO GVL_Const.SIS_CAUSES_MAX DO
+    stCause := stCfg.astCause[uiI];
+    afbOvrClear[uiI](
+        xIn := F_SisBit(wMask := wOverridden, uiIdx := uiI) AND NOT F_SisBit(wMask := wPresent, uiIdx := uiI),
+        tOnDelay := stCause.tOverrideClear, tOffDelay := T#0S, itfTime := itfTimeAct);
+    IF F_SisBit(wMask := wOverridden, uiIdx := uiI) AND afbOvrClear[uiI].xOut THEN
+        wOverridden := wOverridden AND NOT F_SisBitMask(uiIdx := uiI);
+        F_SisLogEvent(itfLog := itfLog, ltTime := ltNow, eKind := E_SisEventKind.OverrideCleared, uiCause := uiI,
+            uiEffect := 0, uiChannel := 0, rValue := 0.0);
+    END_IF
+END_FOR
+// 4.6 Импульсы HMI обработаны; 4.7 остаток обходов и подтверждения нормы
 stCmd.wOverrideReq := 0;
 stCmd.wOverrideCancel := 0;
 stCmd.xStartupOverride := FALSE;
 FOR uiI := 1 TO GVL_Const.SIS_CAUSES_MAX DO
     IF F_SisBit(wMask := wOverridden, uiIdx := uiI) THEN
         stSts.atOverrideRemain[uiI] := afbOverride[uiI].tRemaining;
+        stSts.atOverrideClearRemain[uiI] := afbOvrClear[uiI].tRemaining;
     ELSE
         stSts.atOverrideRemain[uiI] := T#0S;
+        stSts.atOverrideClearRemain[uiI] := T#0S;
     END_IF
 END_FOR
 

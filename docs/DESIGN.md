@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Статус | **Контракт, реализован** (v1.1.1, критерии приёмки 13.5 выполнены; изменения v1.1.0 и v1.1.1 — по итогам ревизии функциональной безопасности, раздел 16). Две команды писали код параллельно и опирались только на этот документ: команда A — логика ПАЗ на ST, команда B — генератор `cemgen`, сгенерированный код, тесты по матрице и документы. Изменения — через PR в этот файл с записью в журнал (раздел 16) |
-| Версия | 1.1.1, 2026-10-19 |
+| Статус | **Контракт, реализован** (v1.2.0, критерии приёмки 13.5 выполнены; изменения v1.1.0–v1.2.0 — по итогам ревизии функциональной безопасности, раздел 16). Две команды писали код параллельно и опирались только на этот документ: команда A — логика ПАЗ на ST, команда B — генератор `cemgen`, сгенерированный код, тесты по матрице и документы. Изменения — через PR в этот файл с записью в журнал (раздел 16) |
+| Версия | 1.2.0, 2026-10-19 |
 | Платформа | CODESYS V3.5 SP17 Patch 3 (3.5.17.30), CODESYS Control Win V3 (32 бит) в пользовательском процессе; целевой ПЛК — ОВЕН ПЛК210 (версию таргет-файла сверить с прошивкой) |
 | Тесты ST | coUnit 1.2.0.0 (namespace `coUnit`), прогон `python tools/codesys/cds.py test` |
 | Библиотека | plc-process-lib (namespace `PL`): `I_TimeSource`, `FB_SystemTime`, `FB_FakeTime`, `FB_Delay`, `F_IsFinite`, константы NE 43 (контракт библиотеки, разделы 4–8, 21.2) |
@@ -28,7 +28,7 @@
 Проект показывает логику противоаварийной защиты (ПАЗ) нефтегазового объекта на ST:
 
 1. **Голосование** `FB_Voting` по схемам MooN (1oo1, 1oo2, 2oo2, 2oo3) для дискретных и аналоговых каналов: недостоверный канал — по политике деградации, тревога рассогласования аналоговых каналов, байпас канала с таймером, журналом и ограничением числа.
-2. **Исполнитель матрицы причин и следствий** `FB_CauseEffect`: задержки причин, следствия с обесточиванием на срабатывание, фиксация первопричины с меткой времени, сброс только вручную и только при снятых причинах, пусковые обходы с таймерами, срабатывание при ошибке конфигурации.
+2. **Исполнитель матрицы причин и следствий** `FB_CauseEffect`: задержки причин, следствия с обесточиванием на срабатывание, фиксация первопричины с меткой времени, сброс только вручную и только при снятых причинах, пусковые обходы с таймерами и автоматическим снятием после подтверждения нормы, срабатывание при ошибке конфигурации.
 3. **Генератор** `cemgen` (Python): матрица в CSV или XLSX → конфигурация ST и привязка демо-объекта, тесты coUnit по матрице, исчерпывающие таблицы истинности голосования, таблицы и HTML-представление матрицы, протокол испытаний в стиле FAT.
 4. **Демо-объект**: вымышленный трёхфазный сепаратор V-101 — 10 причин, 7 следствий (раздел 11).
 
@@ -240,7 +240,7 @@ TYPE E_SisEventKind :
     ResetDenied     := 8,    // uiCause — первая мешающая причина или SIS_FIRST_OUT_CFG
     OverrideOn      := 9,
     OverrideOff     := 10,   // снят командой или ошибкой конфигурации
-    OverrideExpired := 11,
+    OverrideExpired := 11,   // истёк срок tOverrideMax или «время назад» (D-19)
     OverrideDenied  := 12,
     BypassOn        := 13,
     BypassOff       := 14,   // снят запросом или ключом разрешения
@@ -253,7 +253,8 @@ TYPE E_SisEventKind :
     CfgError        := 21,   // rValue — WORD_TO_REAL(wCfgErr)
     CfgOk           := 22,
     StartTrip       := 23,   // срабатывание при старте (xStartTripped)
-    TimeFault       := 24    // источник времени пошёл назад (3.3, D-19)
+    TimeFault       := 24,   // источник времени пошёл назад (3.3, D-19)
+    OverrideCleared := 25    // обход снят автоматически: требования нет непрерывно tOverrideClear (6.4)
 ) INT;
 END_TYPE
 ```
@@ -331,6 +332,7 @@ STRUCT
     tDelay           : TIME := T#0S;                           // задержка срабатывания, <= SIS_DELAY_MAX
     xOverrideAllowed : BOOL := FALSE;                          // пусковой обход разрешён
     tOverrideMax     : TIME := T#0S;                           // длительность обхода, (0, SIS_OVERRIDE_MAX]
+    tOverrideClear   : TIME := T#0S;                           // подтверждение нормы для автоснятия обхода, (0, tOverrideMax)
 END_STRUCT
 END_TYPE
 
@@ -386,6 +388,8 @@ STRUCT
     udiTripCount     : UDINT;       // фиксаций первопричины с запуска
     atOverrideRemain : ARRAY[1..GVL_Const.SIS_CAUSES_MAX] OF TIME;   // остаток обхода; T#0S — обхода нет
     atDelayRemain    : ARRAY[1..GVL_Const.SIS_CAUSES_MAX] OF TIME;   // остаток задержки причины; T#0S — отсчёта нет
+    atOverrideClearRemain : ARRAY[1..GVL_Const.SIS_CAUSES_MAX] OF TIME;   // остаток подтверждения нормы до
+                                    // автоснятия обхода; T#0S — обхода нет или требование есть
 END_STRUCT
 END_TYPE
 
@@ -433,7 +437,7 @@ END_TYPE
 | `VOTE_CFG_DISCREPANCY` | WORD | 16#0010 | Analog: `rDiscrepancyMax_eu < 0` или не конечен, `tDiscrepancyDelay > SIS_DELAY_MAX` |
 | `VOTE_CFG_BYPASS` | WORD | 16#0020 | `uiMaxBypass > N − 1` или `tBypassMax > SIS_BYPASS_MAX` |
 | `CEM_CFG_COUNT` | WORD | 16#0001 | `uiCauseCount` или `uiEffectCount` вне 1..MAX |
-| `CEM_CFG_CAUSE` | WORD | 16#0002 | используемая причина: `eSource` вне перечисления, `tDelay > SIS_DELAY_MAX`, обход разрешён при `tOverrideMax = T#0S` или `> SIS_OVERRIDE_MAX` |
+| `CEM_CFG_CAUSE` | WORD | 16#0002 | используемая причина: `eSource` вне перечисления, `tDelay > SIS_DELAY_MAX`; обход разрешён при `tOverrideMax = T#0S` или `> SIS_OVERRIDE_MAX`, при `tOverrideClear = T#0S` или `tOverrideClear >= tOverrideMax` |
 | `CEM_CFG_EFFECT` | WORD | 16#0004 | используемое следствие: `eSafeState` вне перечисления, `wCauseMask = 0`, биты причин сверх `uiCauseCount`; неиспользуемое следствие с `wCauseMask <> 0` |
 | `CEM_CFG_CRC` | WORD | 16#0008 | `F_CemCrc(stCfg) <> stCfg.wMatrixCrc` |
 | `DEMO_IO_SIMULATION` | BOOL | TRUE | демо без ввода-вывода: `PRG_Main` в первом цикле ставит нормальные значения входов |
@@ -671,7 +675,7 @@ VAR_OUTPUT
 END_VAR
 ```
 
-Рекомендуемые внутренние переменные: `afbDelay`, `afbOverride : ARRAY[1..16] OF PL.FB_Delay`, `wLatched`, `wOverridden`, `xCfgLatch`, `xStartLatch`, `xFirstCall := TRUE`, `xResetHwPrev := TRUE`, `xCfgErrPrev`, `wPresentPrev`, `wEffTrippedPrev := 16#FFFF`, `ltPrev`.
+Рекомендуемые внутренние переменные: `afbDelay`, `afbOverride`, `afbOvrClear : ARRAY[1..16] OF PL.FB_Delay`, `wLatched`, `wOverridden`, `xCfgLatch`, `xStartLatch`, `xFirstCall := TRUE`, `xResetHwPrev := TRUE`, `xCfgErrPrev`, `wPresentPrev`, `wEffTrippedPrev := 16#FFFF`, `ltPrev`.
 
 ### 6.2 Жизненный цикл причины
 
@@ -685,8 +689,9 @@ stateDiagram-v2
     Active --> Latched : нет обхода (CauseTrip)
     Latched --> Normal : сброс разрешён и выполнен (ResetDone)
     note right of Active
-        Пусковой обход (OverrideOn … OverrideExpired)
+        Пусковой обход (OverrideOn … OverrideExpired / OverrideCleared)
         не даёт перейти в Latched; задержка идёт и во время обхода.
+        Обход снимается сам, когда требования нет tOverrideClear (6.4).
         Зафиксированная причина остаётся Latched, когда требование ушло.
     end note
 ```
@@ -713,21 +718,25 @@ stateDiagram-v2
 
 ### 6.4 Пусковые обходы
 
-1. **Ошибка конфигурации:** каждый действующий обход снимается с событием `OverrideOff`; запросы не обрабатываются (без событий); переход к пункту 4 — таймеры вызываются и при ошибке, со снятым входом. **Время назад** без ошибки конфигурации: каждый действующий обход снимается с событием `OverrideExpired` (i по возрастанию, до пункта 2) — срок обхода недостоверен (D-19).
+1. **Ошибка конфигурации:** каждый действующий обход снимается с событием `OverrideOff`; запросы не обрабатываются (без событий); переход к пункту 4 — таймеры вызываются и при ошибке, со снятым входом. **Время назад** без ошибки конфигурации: каждый действующий обход снимается с событием `OverrideExpired` (i по возрастанию, до пункта 2) — срок обхода и отсчёт подтверждения нормы недостоверны (D-19).
 2. **Снятие командой:** для `i ≤ uiNc` с битом в `stCmd.wOverrideCancel` и действующим обходом — снять, `OverrideOff`.
 3. **Запросы:** `wReq := stCmd.wOverrideReq`, плюс при `stCmd.xStartupOverride` — биты всех `i ≤ uiNc` с `xEnable AND xOverrideAllowed`. Для каждого `i ≤ uiNc` с битом в `wReq` **без** действующего обхода (по возрастанию):
-   - принять, если `xEnable AND xOverrideAllowed AND tOverrideMax > T#0S AND xOverridePermit` → `OverrideOn` и `afbOverride[i].Preset(xValue := FALSE)`: срок нового обхода отсчитывается от `ltNow` этого вызова, даже если прежний обход истёк в прошлом вызове или снят командой в этом (без `Preset` вход таймера остался бы `TRUE`, таймер не увидел бы смены входа, и новый обход истёк бы сразу или получил бы остаток прежнего — D-13);
+   - принять, если `xEnable AND xOverrideAllowed AND tOverrideMax > T#0S AND xOverridePermit` → `OverrideOn`, `afbOverride[i].Preset(xValue := FALSE)` и `afbOvrClear[i].Preset(xValue := FALSE)`: срок нового обхода и отсчёт подтверждения нормы идут от `ltNow` этого вызова, даже если прежний обход истёк в прошлом вызове или снят командой в этом (без `Preset` вход таймера остался бы `TRUE`, таймер не увидел бы смены входа, и новый обход истёк или снялся бы сразу или получил бы остаток прежнего — D-13);
    - иначе `OverrideDenied`.
-   Запрос по уже действующему обходу игнорируется (без события, срок не продлевается — D-13). Биты `i > uiNc` игнорируются.
-4. **Таймеры:** `afbOverride[i](xIn := xOverridden[i], tOnDelay := tOverrideMax, itfTime := itfTimeAct)` для всех `i`; если `xOverridden[i] AND afbOverride[i].xOut` — снять, `OverrideExpired`. Обход, принятый в этом вызове, отсчитывается от `ltNow` этого вызова и в нём же не истекает.
-5. `stCmd.wOverrideReq := 0; stCmd.wOverrideCancel := 0; stCmd.xStartupOverride := FALSE`.
-6. `atOverrideRemain[i] := afbOverride[i].tRemaining` для действующих, иначе `T#0S`.
+   Запрос по уже действующему обходу игнорируется (без события, срок не продлевается, подтверждение нормы не перезапускается — D-13). Биты `i > uiNc` игнорируются.
+4. **Срок:** `afbOverride[i](xIn := xOverridden[i], tOnDelay := tOverrideMax, itfTime := itfTimeAct)` для всех `i`; если `xOverridden[i] AND afbOverride[i].xOut` — снять, `OverrideExpired`. Обход, принятый в этом вызове, отсчитывается от `ltNow` этого вызова и в нём же не истекает.
+5. **Автоснятие при норме** (R-12): `afbOvrClear[i](xIn := xOverridden[i] AND NOT xPresent[i], tOnDelay := tOverrideClear, tOffDelay := T#0S, itfTime := itfTimeAct)` для всех `i` (после пункта 4); если `xOverridden[i] AND afbOvrClear[i].xOut` — снять, `OverrideCleared`. Подтверждение нормы — сырое требование причины `xPresent[i]` (6.3, до задержки — как для сброса, D-07) отсутствует **непрерывно** `tOverrideClear`: каждое появление требования перезапускает отсчёт. Обход, принятый в этом вызове, в нём же не снимается (`tOverrideClear > T#0S`, 6.8).
+6. `stCmd.wOverrideReq := 0; stCmd.wOverrideCancel := 0; stCmd.xStartupOverride := FALSE`.
+7. `atOverrideRemain[i] := afbOverride[i].tRemaining` для действующих, иначе `T#0S`; `atOverrideClearRemain[i] := afbOvrClear[i].tRemaining` для действующих, иначе `T#0S` (при требовании — `T#0S`: отсчёта нет).
 
-Ключ `xOverridePermit` нужен для **включения** обхода; снятие ключа действующий обход не снимает (обход ограничен сроком) — в отличие от байпаса канала (5.7). Сверить с требованиями к обходам (S-06).
+Ключ `xOverridePermit` нужен для **включения** обхода; снятие ключа действующий обход не снимает (обход ограничен сроком и снимается при норме) — в отличие от байпаса канала (5.7). Сверить с требованиями к обходам (S-06).
 
-Обход снимается только по сроку, командой, при ошибке конфигурации или «времени назад». Когда требование причины ушло (процесс вышел в норму), обход **не снимается**: до конца `tOverrideMax` новое требование этой причины не фиксируется (для PSLL101 — до 15 мин, для LSLL102 — до 30 мин после пуска). Автоматическое снятие пускового обхода при возврате процесса в норму — распространённое решение, в v1 его нет (R-12 в `docs/ASSUMPTIONS.md`, сверить S-06).
+Обход снимается:
+- **автоматически**, когда требования причины нет непрерывно `tOverrideClear` (`OverrideCleared`): процесс вышел в норму и подтвердил её — защита возвращается сразу, а не в конце срока (для PSLL101 — через 30 с устойчивой нормы, а не через 15 мин после пуска, R-12);
+- **по сроку** `tOverrideMax` (`OverrideExpired`) — верхняя граница, она действует всегда: если требование дребезжит (норма каждый раз короче `tOverrideClear`) или держится, обход снимается в конце срока. Когда срок и подтверждение заканчиваются в одном вызове, обход снят по сроку (пункт 4 раньше пункта 5): пишется `OverrideExpired`, `OverrideCleared` — нет;
+- **командой** или **ошибкой конфигурации** (`OverrideOff`), при **«времени назад»** (`OverrideExpired`, D-19).
 
-Обход маскирует только фиксацию (6.6): требование, задержка и события причины работают как обычно. Когда обход истекает при активной причине, она фиксируется в том же вызове (поэтому задержка, прошедшая во время обхода, не отсчитывается заново).
+Обход маскирует только фиксацию (6.6): требование, задержка и события причины работают как обычно. Когда обход истекает при активной причине, она фиксируется в том же вызове (поэтому задержка, прошедшая во время обхода, не отсчитывается заново). При автоснятии требования у причины нет, поэтому в этом вызове она не фиксируется и выходы не меняются; новое требование фиксируется через полную задержку `tDelay` от своего появления (отсчёт задержки после ухода требования начинается заново, 6.3).
 
 ### 6.5 Сброс
 
@@ -782,15 +791,15 @@ lo(uiCauseCount), hi(uiCauseCount), lo(uiEffectCount), hi(uiEffectCount),
 
 ### 6.9 События `FB_CauseEffect` в вызове
 
-`CfgError`/`CfgOk` → `StartTrip` → `FirstOut` (старт/конфигурация) → `TimeFault` → `CauseDemand`/`CauseClear` → `OverrideExpired` (время назад) → `OverrideOff` (снятие) → `OverrideOn`/`OverrideDenied` → `OverrideExpired` → `ResetDone`/`ResetDenied` → `FirstOut` (причина) → `CauseTrip` → `EffectTrip`/`EffectRestore`. Внутри вида — по возрастанию индекса. Метка — `ltNow` вызова.
+`CfgError`/`CfgOk` → `StartTrip` → `FirstOut` (старт/конфигурация) → `TimeFault` → `CauseDemand`/`CauseClear` → `OverrideExpired` (время назад) → `OverrideOff` (снятие) → `OverrideOn`/`OverrideDenied` → `OverrideExpired` (срок) → `OverrideCleared` → `ResetDone`/`ResetDenied` → `FirstOut` (причина) → `CauseTrip` → `EffectTrip`/`EffectRestore`. Внутри вида — по возрастанию индекса. Метка — `ltNow` вызова.
 
 ### 6.10 Старт ПЛК
 
-При `xStartTripped = TRUE` после старта все следствия сработали (первопричина `SIS_FIRST_OUT_START`), пока оператор не выполнит сброс (D-03). Типовой пуск сепаратора: ПЛК стартует → оператор включает пусковые обходы `PSLL101`, `LSLL102`, `PSLL108` (ключ HS122 и команда HMI) → сброс → следствия под напряжением → РСУ пускает механизмы → давление и уровень набираются → обходы истекают → обычная работа. Если к истечению обхода причина не ушла — срабатывание.
+При `xStartTripped = TRUE` после старта все следствия сработали (первопричина `SIS_FIRST_OUT_START`), пока оператор не выполнит сброс (D-03). Типовой пуск сепаратора: ПЛК стартует → оператор включает пусковые обходы `PSLL101`, `LSLL102`, `PSLL108` (ключ HS122 и команда HMI) → сброс → следствия под напряжением → РСУ пускает механизмы → давление и уровень набираются → каждый обход снимается сам после подтверждения нормы своей причины (`OverrideCleared`, 6.4) → обычная работа. Если к истечению срока обхода причина не ушла — срабатывание; если норма не держится дольше `tOverrideClear` — обход снимается по сроку.
 
 ### 6.11 Пример временной диаграммы (нормативный)
 
-Причина 1: задержка 2 с, без обхода; причина 2: задержка 5 с, обход 15 мин; следствие 1 — от причин 1 и 2; `xStartTripped = FALSE`; `t0` — момент, когда все следствия под напряжением.
+Причина 1: задержка 2 с, без обхода; причина 2: задержка 5 с, обход 15 мин, подтверждение нормы 30 с; следствие 1 — от причин 1 и 2; `xStartTripped = FALSE`; `t0` — момент, когда все следствия под напряжением.
 
 | Время | Воздействие | Результат |
 |---|---|---|
@@ -803,6 +812,13 @@ lo(uiCauseCount), hi(uiCauseCount), lo(uiEffectCount), hi(uiEffectCount),
 | t1 | обход причины 2 и её требование в одном вызове | `CauseDemand(2)`, `OverrideOn(2)`; не зафиксирована |
 | t1 + 14 мин 59,9 с | — | обход действует, `atOverrideRemain[2] = T#100MS` |
 | t1 + 15 мин | — | `OverrideExpired(2)`, `FirstOut(2)`, `CauseTrip(2)`, `EffectTrip(1)` |
+| t1 + 15 мин 1 с | требование 2 ушло, сброс | `CauseClear(2)`, `ResetDone`, `EffectRestore(1)` |
+| t2 | обход причины 2 и её требование в одном вызове | `CauseDemand(2)`, `OverrideOn(2)`; `atOverrideClearRemain[2] = T#0S` (требование есть) |
+| t2 + 10 с | требование 2 ушло | `CauseClear(2)`; обход действует, `atOverrideClearRemain[2] = T#30S` |
+| t2 + 39,9 с | — | обход действует, `atOverrideClearRemain[2] = T#100MS` |
+| t2 + 40 с | — | `OverrideCleared(2)`; не зафиксирована, следствие 1 под напряжением |
+| t2 + 50 с | требование 2 | `CauseDemand(2)`, `atDelayRemain[2] = T#5S` (задержка — заново) |
+| t2 + 55 с | — | `FirstOut(2)`, `CauseTrip(2)`, `EffectTrip(1)` |
 
 ---
 
@@ -1006,6 +1022,7 @@ PRG_Sis();
 | `bypass_time` | нет (`0s`) | ✓ | ✓ | `0s` | `tBypassMax` |
 | `override` | нет (`no`) | ✓ | ✓ | ✓ | `xOverrideAllowed` |
 | `override_time` | при `override` | ✓ | ✓ | ✓ | `tOverrideMax` |
+| `override_clear` | нет (`30s` при `override`) | ✓ | ✓ | ✓ | `tOverrideClear`: обход снимается сам, когда требования причины нет непрерывно это время (6.4); `0 < override_clear < override_time`; только при `override` |
 | `enable` | нет (`yes`) | ✓ | ✓ | ✓ | `xEnable` |
 | `notes` | нет | ✓ | ✓ | ✓ | документы |
 
@@ -1041,8 +1058,8 @@ PRG_Sis();
 | CEM-E018 | `trip_on` не подходит к `signal` |
 | CEM-E019 | ai: `setpoint`, `range_lo`, `range_hi`, `normal` — не числа; `range_lo >= range_hi`; уставка или `normal` вне шкалы; `normal` не на стороне нормы: `high` — `normal < setpoint − hyst`, `low` — `normal > setpoint + hyst` |
 | CEM-E020 | ai: `hyst < 0`, `discrepancy < 0`, нет `units`; di/ext: заполнены поля ai |
-| CEM-E021 | длительность не разбирается, отрицательная, не кратна `test_step`, больше предела (`delay`, `discrepancy_delay` ≤ 10m, `override_time` ≤ 2h, `bypass_time` ≤ 12h) |
-| CEM-E022 | `override = yes` без `override_time > 0`; `override_time` при `override = no` |
+| CEM-E021 | длительность не разбирается, отрицательная, не кратна `test_step` (и значение по умолчанию `override_clear`), больше предела (`delay`, `discrepancy_delay` ≤ 10m, `override_time`, `override_clear` ≤ 2h, `bypass_time` ≤ 12h) |
+| CEM-E022 | `override = yes` без `override_time > 0`; `override_time` или `override_clear` при `override = no` |
 | CEM-E023 | `bypass_max > N − 1`; `bypass_max > 0` при `bypass_time = 0s`; для `ext` не 0 |
 | CEM-E024 | общий тег канала в нескольких причинах: разный `signal`, `units`, `range_lo`, `range_hi`, `normal` или (di) `trip_on` |
 | CEM-E025 | ячейка матрицы не `X`/`x`/`Х`/`х`/пусто |
@@ -1051,6 +1068,7 @@ PRG_Sis();
 | CEM-E028 | `safe_state` неизвестно |
 | CEM-E029 | логическое значение не из списка 9.1 |
 | CEM-E030 | ai: стимул требования (12.5) вне 3,8…20,5 мА — уставка слишком близко к краю шкалы |
+| CEM-E031 | `override = yes`: `override_clear` (заданный или по умолчанию `30s`) равен 0 или не меньше `override_time` — автоснятие при норме не сработало бы раньше срока или сняло бы обход в вызове включения (6.4) |
 | CEM-W001 | выключенная причина с «X» — в конфигурацию попадёт, но не сработает |
 | CEM-W002 | стимул одной причины вызывает и другую (общие каналы): тест `…Demand_TripsOwnEffects` ожидает обе — по эталонной модели |
 | CEM-W003 | `override_time < delay`: обход истечёт раньше задержки |
@@ -1147,7 +1165,7 @@ VAR_GLOBAL CONSTANT
         astCause := [
             (xEnable := TRUE, eSource := E_CauseSource.Voting, tDelay := T#2S),          // 1 PSHH101
             (xEnable := TRUE, eSource := E_CauseSource.Voting, tDelay := T#5S,
-                xOverrideAllowed := TRUE, tOverrideMax := T#15M),                        // 2 PSLL101
+                xOverrideAllowed := TRUE, tOverrideMax := T#15M, tOverrideClear := T#30S),   // 2 PSLL101
             // … элементы 3..10, затем 11..16:
             (xEnable := FALSE)],
         astEffect := [
@@ -1267,17 +1285,17 @@ flowchart LR
 | № | Тег | Описание | Каналы | Схема | Политика | Уставка | Задержка | Байпас | Пусковой обход |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | PSHH101 | Давление аварийно высокое | PT101A/B/C, 0…1,6 МПа | 2oo3 | VoteTrip | ≥ 0,90 МПа | 2 с | 1 канал, 8 ч | — |
-| 2 | PSLL101 | Давление аварийно низкое | PT101A/B/C | 2oo3 | VoteTrip | ≤ 0,15 МПа | 5 с | 1, 8 ч | 15 мин |
+| 2 | PSLL101 | Давление аварийно низкое | PT101A/B/C | 2oo3 | VoteTrip | ≤ 0,15 МПа | 5 с | 1, 8 ч | 15 мин, снятие после 30 с нормы |
 | 3 | LSHH102 | Уровень аварийно высокий | LT102A/B/C, 0…2,4 м | 2oo3 | DegradeAvailable | ≥ 1,80 м | 3 с | 1, 8 ч | — |
-| 4 | LSLL102 | Уровень аварийно низкий | LT102A/B/C | 2oo3 | DegradeAvailable | ≤ 0,50 м | 5 с | 1, 8 ч | 30 мин |
+| 4 | LSLL102 | Уровень аварийно низкий | LT102A/B/C | 2oo3 | DegradeAvailable | ≤ 0,50 м | 5 с | 1, 8 ч | 30 мин, снятие после 1 мин нормы |
 | 5 | TSHH103 | Температура аварийно высокая | TT103A/B, 0…150 °C | 1oo2 | DegradeSafe | ≥ 85 °C | 5 с | 1, 8 ч | — |
 | 6 | ASHH104 | Загазованность аварийно высокая | AT104A/B/C, 0…100 % НКПР | 2oo3 | DegradeSafe | ≥ 50 % НКПР | 2 с | 1, 8 ч | — |
 | 7 | BSH105 | Пожар | BS105A/B (НЗ, контроль линии) | 1oo2 | DegradeSafe | размыкание | 0 | 1, 8 ч | — |
 | 8 | HS106 | Аварийный останов кнопкой | HS106A (операторная), HS106B (по месту) | 1oo2 | VoteTrip | нажатие (размыкание) | 0 | запрещён | — |
-| 9 | PSLL108 | Давление воздуха КИП аварийно низкое | PS108A/B | 2oo2 | DegradeSafe | размыкание | 10 с | 1, 4 ч | 10 мин |
+| 9 | PSLL108 | Давление воздуха КИП аварийно низкое | PS108A/B | 2oo2 | DegradeSafe | размыкание | 10 с | 1, 4 ч | 10 мин, снятие после 30 с нормы |
 | 10 | ESL109 | Потеря напряжения щита 0,4 кВ | ES109 | 1oo1 | VoteTrip | размыкание | 2 с | запрещён | — |
 
-Гистерезис, рассогласование и нормальные значения — в [cem.csv](../examples/separator/cem.csv). Выбор схем и политик иллюстрирует все варианты контракта: реальный выбор — по результатам анализа опасностей, определения SIL и SRS. Уставки загазованности (предупреждение 20 % НКПР — вне ПАЗ, срабатывание 50 % НКПР) — **сверить с применимыми нормами**.
+Гистерезис, рассогласование и нормальные значения — в [cem.csv](../examples/separator/cem.csv). Подтверждение нормы для автоснятия пусковых обходов (`override_clear`, 6.4) — с обоснованием в колонке `notes`: PSLL101 — 30 с (6 задержек причины: давление при наборе устойчиво выше уставки, а защита возвращается задолго до конца срока 15 мин); LSLL102 — 1 мин (уровень при заполнении колеблется от притока и пены, нужна более длинная выдержка); PSLL108 — 30 с (реле давления воздуха может дребезжать у порога, пока компрессорная заполняет ресивер). Значения вымышленные — реальные выбираются по динамике процесса и анализу опасностей (S-06). Выбор схем и политик иллюстрирует все варианты контракта: реальный выбор — по результатам анализа опасностей, определения SIL и SRS. Уставки загазованности (предупреждение 20 % НКПР — вне ПАЗ, срабатывание 50 % НКПР) — **сверить с применимыми нормами**.
 
 ### 11.4 Следствия и матрица
 
@@ -1351,7 +1369,7 @@ CRC матрицы — `16#CD40`. Ключи: HS120 — «Сброс ПАЗ», H
 |---|---|
 | `FB_VoteEval_Test` | `Vote_ArchNone_TripsReportsNone`, `Vote_PolicyOutOfEnum_TripsNone`, `Vote_NotUsedInsideN_CountsInvalid`, `Vote_ArchHelpers_ChannelsAndRequired` |
 | `FB_Voting_Test` | `Voting_DefaultCfg_TripsCfgError`, `Voting_AnalogHigh_InclusiveAtLimit`, `Voting_AnalogLow_InclusiveAtLimit`, `Voting_Hysteresis_ReleasesBeyondBand`, `Voting_AnalogNaN_Invalid`, `Voting_AnalogInf_Invalid`, `Voting_DiHealthyFalse_InvertsDemand`, `Voting_ChannelValidity_EventsOnChange`, `Voting_Bypass_ExpiresExactlyAtMax`, `Voting_Bypass_RemainCountsDown`, `Voting_Bypass_LimitLowestChannelWins`, `Voting_Bypass_DeniedWithoutPermit`, `Voting_Bypass_PermitLostEnds`, `Voting_Bypass_ReRequestNeedsRelease`, `Voting_Bypass_ZeroTimeDenied`, `Voting_Bypass_EventsWithChannel`, `Voting_Discrepancy_AfterDelayExactly`, `Voting_Discrepancy_AtLimitNoAlarm`, `Voting_Discrepancy_IgnoresBypassedAndInvalid`, `Voting_Discrepancy_ZeroDisables`, `Voting_Discrepancy_NoTripImpact`, `Voting_CfgError_RemovesBypasses`, `Voting_UnusedChannels_Ignored`, `Voting_TimeBackwards_BypassEnds`, `Voting_NoTimeSource_UsesSystemTime` |
-| `FB_CauseEffect_Test` | `Cem_DefaultCfg_AllTripped`, `Cem_CrcMismatch_AllTripped`, `Cem_MaskBeyondCount_CfgError`, `Cem_CfgErrorRecovered_NeedsReset`, `Cem_StartTripped_RequiresReset`, `Cem_StartNotTripped_EnergizedFirstCall`, `Cem_Delay_TripsExactlyAtDelay`, `Cem_ShortPulse_NoTrip`, `Cem_ZeroDelay_SameCall`, `Cem_Latch_HeldAfterClear`, `Cem_Reset_DeniedWhilePresent`, `Cem_Reset_DeniedWhilePending`, `Cem_Reset_AllowedWhenOverridden`, `Cem_ResetHw_EdgeOnly`, `Cem_ResetHw_HeldAtStartIgnored`, `Cem_FirstOut_RecordsEarliest`, `Cem_FirstOut_SimultaneousLowestAndMask`, `Cem_FirstOut_TimestampFromSource`, `Cem_FirstOut_ClearedByReset`, `Cem_Override_ExpiresExactly`, `Cem_Override_DeniedNotAllowed`, `Cem_Override_DeniedWithoutPermit`, `Cem_Override_CancelRestoresTrip`, `Cem_Override_RepeatIgnored`, `Cem_Override_ReRequestAfterExpiryFullTime`, `Cem_Override_CancelAndRequestRestarts`, `Cem_Override_StartupMaskAllowedOnly`, `Cem_Override_DelayRunsDuringOverride`, `Cem_TimeBackwards_PendingDelayTrips`, `Cem_TimeBackwards_OverrideEnds`, `Cem_DisabledCause_NeverTrips`, `Cem_UnusedEffects_Deenergized`, `Cem_CmdBits_Cleared`, `Cem_Events_OrderInCall`, `Cem_EffectTripEvent_CarriesCause` |
+| `FB_CauseEffect_Test` | `Cem_DefaultCfg_AllTripped`, `Cem_CrcMismatch_AllTripped`, `Cem_MaskBeyondCount_CfgError`, `Cem_CfgErrorRecovered_NeedsReset`, `Cem_StartTripped_RequiresReset`, `Cem_StartNotTripped_EnergizedFirstCall`, `Cem_Delay_TripsExactlyAtDelay`, `Cem_ShortPulse_NoTrip`, `Cem_ZeroDelay_SameCall`, `Cem_Latch_HeldAfterClear`, `Cem_Reset_DeniedWhilePresent`, `Cem_Reset_DeniedWhilePending`, `Cem_Reset_AllowedWhenOverridden`, `Cem_ResetHw_EdgeOnly`, `Cem_ResetHw_HeldAtStartIgnored`, `Cem_FirstOut_RecordsEarliest`, `Cem_FirstOut_SimultaneousLowestAndMask`, `Cem_FirstOut_TimestampFromSource`, `Cem_FirstOut_ClearedByReset`, `Cem_Override_ExpiresExactly`, `Cem_Override_DeniedNotAllowed`, `Cem_Override_DeniedWithoutPermit`, `Cem_Override_CancelRestoresTrip`, `Cem_Override_RepeatIgnored`, `Cem_Override_ReRequestAfterExpiryFullTime`, `Cem_Override_CancelAndRequestRestarts`, `Cem_Override_StartupMaskAllowedOnly`, `Cem_Override_DelayRunsDuringOverride`, `Cem_Override_ClearsExactlyAtConfirm`, `Cem_Override_ChatteringNotCleared`, `Cem_Override_ReRequestRestartsConfirm`, `Cem_Override_ExpiryWinsTieWithConfirm`, `Cem_TimeBackwards_DuringConfirmEndsOverride`, `Cem_TimeBackwards_PendingDelayTrips`, `Cem_TimeBackwards_OverrideEnds`, `Cem_DisabledCause_NeverTrips`, `Cem_UnusedEffects_Deenergized`, `Cem_CmdBits_Cleared`, `Cem_Events_OrderInCall`, `Cem_EffectTripEvent_CarriesCause` |
 | `FB_SisEventLog_Test` | `Log_Ring_OverwritesOldest`, `Log_Seq_IncrementsAndWraps`, `Log_GetEventBeyondCount_Empty`, `Log_Clear_KeepsSeq`, `Log_SizeOfEvent_Is24` |
 | `FB_SisUnit_Test` | `Unit_ExternalCause_UsesExtDemand`, `Unit_DisabledCause_VotingNotCalled`, `Unit_VotingCfgError_TripsOnlyThatCause`, `Unit_TimeSource_PassedToChildren`, `Unit_Events_VotingBeforeCem` |
 | `FB_SisUtil_Test` | `Sis_Crc16_CheckValue` (`123456789` → `16#29B1`), `Sis_CemCrc_DemoMatrixValue` (`16#CD40` на локальной копии матрицы 11.4), `Sis_Bit_OutOfRangeFalse`, `Sis_BitMask_OutOfRangeZero`, `Sis_LowMask_Bounds`, `Sis_Ne43Valid_Limits` (3,6 и 21,0 — недостоверно, 3,61 и 20,99 — достоверно, NaN), `Sis_AiToEu_Scale` |
@@ -1378,6 +1396,10 @@ CRC матрицы — `16#CD40`. Ключи: HS120 — «Сброс ПАЗ», H
 | `Matrix_<TAG>Demand_TripsOwnEffects` | всегда | `Arm`; требование; `Cycle`; `Run(delay)`. Выход каждого следствия: обесточен при «X», под напряжением без «X»; `uiFirstOut = CAUSE_<TAG>`; `wCauseLatched` — по модели |
 | `Matrix_<TAG>Delay_TripsExactlyAtDelay` | `delay > 0` | требование в `t0`; на `t0 + delay − Δ` не зафиксирована и следствия под напряжением; на `t0 + delay` — зафиксирована, `ltFirstOut = t0 + delay` |
 | `Matrix_<TAG>Override_ExpiresThenTrips` | `override = yes` | ключ HS122; `wOverrideReq` и требование в одном вызове `t0`; на `t0 + override_time − Δ` — обход действует, не зафиксирована; на `t0 + override_time` — `OverrideExpired`, зафиксирована, первопричина `<TAG>` |
+| `Matrix_<TAG>Override_ClearsAfterConfirm` | `override = yes` | ключ HS122; `wOverrideReq` и требование в `t0`; норма в `t1 = t0 + Δ`; на `t1 + override_clear − Δ` — обход действует, `atOverrideClearRemain = Δ`; на `t1 + override_clear` — `OverrideCleared`, `wOverridden` 0, не зафиксирована, следствия под напряжением |
+| `Matrix_<TAG>Override_DemandBackRestartsConfirm` | `override = yes` | как предыдущий до `t1 + override_clear − Δ`; на `t1 + override_clear` — требование снова: обход действует (без перезапуска подтверждения он снялся бы здесь), `atOverrideClearRemain = T#0S`; норма в `t2`; на `t2 + override_clear − Δ` — обход действует; на `t2 + override_clear` — `OverrideCleared` |
+| `Matrix_<TAG>Override_ExpiryBoundsConfirm` | `override = yes` | `wOverrideReq` и требование в `t0`; норма с `t0 + override_time − override_clear + Δ` (подтверждение закончилось бы после срока); на `t0 + override_time − Δ` — обход действует; на `t0 + override_time` — `OverrideExpired`, `OverrideCleared` нет, не зафиксирована (требования нет); срок — верхняя граница |
+| `Matrix_<TAG>Override_ClearedThenDelayTrips` | `override = yes`, `delay > 0` | `wOverrideReq` и требование в `t0`; `Run(delay)` — причина активна под обходом, не зафиксирована; норма; через `override_clear` — `OverrideCleared`, не зафиксирована; требование в `t2`; на `t2 + delay − Δ` — не зафиксирована (задержка — заново); на `t2 + delay` — зафиксирована, первопричина `<TAG>`, `ltFirstOut = t2 + delay` |
 | `Matrix_<TAG>Override_Denied` | `override = no` | ключ HS122; запрос → последнее событие `OverrideDenied`, бит `wOverridden` 0; требование → срабатывание после задержки |
 | `Matrix_<TAG>Reset_OnlyAfterClear` | всегда | срабатывание; сброс при требовании → `ResetDenied`, `uiResetBlocker = CAUSE_<TAG>`, следствия обесточены; норма → следствия всё ещё обесточены; сброс → все под напряжением |
 | `Matrix_<TAG>ChannelInvalid_MatchesPolicy` | не `ext` | канал 1 недостоверен, `Run(delay)` → срабатывание и `eArchEff` по модели; если не сработало и N ≥ 2 — требование на канале 2, `Run(delay)` → по модели (показывает разницу политик: PSHH101 срабатывает, LSHH102 — нет) |
@@ -1393,7 +1415,7 @@ CRC матрицы — `16#CD40`. Ключи: HS120 — «Сброс ПАЗ», H
 | `Matrix_Start_TrippedUntilReset` / `Matrix_Start_EnergizedWithoutReset` | по `start_tripped`: первый `Cycle` с нормальными входами → все следствия обесточены, `uiFirstOut = SIS_FIRST_OUT_START` (или все под напряжением); сброс → под напряжением |
 | `Matrix_GeneratedCfg_PassesChecks` | `F_CemCrc(stCfg := GVL_SisCfg.CEM_CFG) = CEM_CFG.wMatrixCrc`; после `Arm` нет ошибок конфигурации у матрицы и у всех групп голосования |
 
-Для демо-матрицы — 71 тест: 10 × `Demand`, 8 × `Delay`, 3 × `Override_ExpiresThenTrips` + 7 × `Override_Denied`, 10 × `Reset`, 10 × `ChannelInvalid`, 8 × `Bypass_Expires` + 2 × `Bypass_Denied`, 10 × `FirstOut`, 3 общих. Наборы `FB_CemGen01_Test` (40) и `FB_CemGen02_Test` (31).
+Для демо-матрицы — 83 теста: 10 × `Demand`, 8 × `Delay`, 3 × `Override_ExpiresThenTrips` + 3 × `Override_ClearsAfterConfirm` + 3 × `Override_DemandBackRestartsConfirm` + 3 × `Override_ExpiryBoundsConfirm` + 3 × `Override_ClearedThenDelayTrips` + 7 × `Override_Denied`, 10 × `Reset`, 10 × `ChannelInvalid`, 8 × `Bypass_Expires` + 2 × `Bypass_Denied`, 10 × `FirstOut`, 3 общих. Наборы `FB_CemGen01_Test` (40), `FB_CemGen02_Test` (40) и `FB_CemGen03_Test` (3).
 
 Образец метода (генерируется):
 
@@ -1455,7 +1477,7 @@ END_VAR
 
 ### 12.6 Ограничения прогона
 
-- Все тесты coUnit выполняются в одном цикле задачи `TestTask`. Оценка: таблицы истинности — ≈ 8 тыс. вызовов `FB_Voting`, сценарии — ≈ 71 × 150 вызовов `FB_SisApp`. Замер времени цикла — в `docs/TEST_REPORT.md`; если сторожевой таймер задачи сработает — разбить наборы (P-03).
+- Все тесты coUnit выполняются в одном цикле задачи `TestTask`. Оценка: таблицы истинности — ≈ 8 тыс. вызовов `FB_Voting`, сценарии — ≈ 83 × 150 вызовов `FB_SisApp`. Замер времени цикла — в `docs/TEST_REPORT.md`; если сторожевой таймер задачи сработает — разбить наборы (P-03).
 - Сообщения ассертов — ASCII; в сообщениях сгенерированных тестов — тег причины и ожидаемое состояние.
 
 ### 12.7 Протокол FAT (`docs/FAT_protocol.md`, генерируется)
@@ -1555,12 +1577,12 @@ python tools/codesys/cds.py test && python tools/codesys/cds.py roundtrip
 
 ### 13.5 Критерии приёмки v1
 
-Итог интеграции и ревизии функциональной безопасности (v1.1.0) 16.10.2026 — [TEST_REPORT.md](TEST_REPORT.md), [FAT_REPORT.md](FAT_REPORT.md), [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md).
+Итог интеграции и ревизии функциональной безопасности (v1.1.0) 16.10.2026, повторно после автоснятия пускового обхода (v1.2.0) 19.10.2026 — [TEST_REPORT.md](TEST_REPORT.md), [FAT_REPORT.md](FAT_REPORT.md), [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md).
 
 - [x] Таблицы истинности голосования покрыты полностью (36 тестов, 4188 строк), остальная логика — граничными тестами 12.3. Таблицы проверяются дважды: `VoteTruth_*` (эталонная модель `cemgen`) и `VoteTable_*` (независимая модель `tools_project/vote_model.py`, A-10).
 - [x] Матрица в документации и в коде генерируются из одного источника; CI проверяет `generate --check` (вместе с разделом 3 `docs/SRS.md`).
 - [x] Дисклеймер — в README и в заголовке каждого объекта ST (проверка 3.1, `tools/project_checks/test_disclaimer.py`).
-- [x] `cds.py build --tests`, `check --tests` — 0 ошибок и 0 предупреждений; `cds.py test` — все тесты пройдены (18 наборов, 238 тестов); `roundtrip` — без диффа (711 файлов).
+- [x] `cds.py build --tests`, `check --tests` — 0 ошибок и 0 предупреждений; `cds.py test` — все тесты пройдены (19 наборов, 255 тестов); `roundtrip` — без диффа (747 файлов).
 - [x] `st_lint --strict`, iec_checker, ruff, mypy, pytest — без необоснованных находок.
 - [x] `docs/FAT_REPORT.md` по последнему прогону: все шаги «соответствует» (55 из 55).
 - [x] Реальных объектов, заказчиков и чужого кода нет: объект V-101 и все значения вымышленные.
@@ -1590,6 +1612,7 @@ python tools/codesys/cds.py test && python tools/codesys/cds.py roundtrip
 | D-17 | Логика ПАЗ не зависит от ФБ устройств PL | Контракт PL, 21.2: своя цепочка «причина → следствие», обесточивание на срабатывание |
 | D-18 | В ПЛК нет строк тегов и текстов | `STRING` в 3.5.17 — Windows-1252; тексты — в документах и HMI по индексам (как в PL, 19) |
 | D-19 | «Время назад» — неисправность источника времени: `TimeFault`, байпасы и обходы снимаются, идущие задержки причин завершаются (3.3) | Перезапуск отсчёта `PL.FB_Delay` после скачка назад продлевал байпас или обход на полный срок за каждый скачок — разрешённый предел переставал действовать, — и откладывал срабатывание сверх заданного времени реакции. При неисправности, которая делает недостоверными сроки ПАЗ, безопасная сторона — снять подавления и сработать по имеющимся требованиям (ложное срабатывание безопасно, продлённый байпас — нет). Задержка рассогласования — диагностика, её перезапуск безопасен |
+| D-20 | Пусковой обход снимается автоматически, когда сырого требования причины нет непрерывно `tOverrideClear`; срок `tOverrideMax` остаётся верхней границей, в одном вызове срок старше подтверждения | Обход нужен, пока процесс не вышел в рабочий режим; дальше он только подавляет защиту: при снятии лишь по сроку повторное падение давления или уровня в первые 15–30 мин после пуска не фиксировалось бы (R-12). Выдержка в норме отсекает дребезг у уставки во время пуска (без неё обход снимался бы при первом кратком выходе в норму и пуск срывался бы ложными срабатываниями). Условие — сырое требование (до задержки), как для сброса (D-07): «нормой» не считается требование, которое ещё не прошло задержку. Подтверждение — только при действующем обходе и начинается заново при каждом принятии обхода (как срок, D-13) и при каждом появлении требования; «время назад» снимает обход по D-19 (`OverrideExpired`). Новый код события `OverrideCleared := 25` отличает снятие при норме от истечения срока и от команды. Сверить с требованиями к обходам (S-06) |
 
 Решения переносятся в `docs/ASSUMPTIONS.md` при интеграции; отступления реализации от контракта команды записывают там же (A-xx — команда A, B-xx — команда B).
 
@@ -1618,7 +1641,7 @@ python tools/codesys/cds.py test && python tools/codesys/cds.py roundtrip
 | S-03 | Состав SRS для `docs/SRS.md` | ГОСТ Р МЭК 61511-1-2018, п. 10.3 |
 | S-04 | Уставки загазованности 20 % / 50 % НКПР | применимые федеральные нормы и правила в области промышленной безопасности для нефтегазовых объектов |
 | S-05 | Практика деградации 2oo3 → 1oo2 при отказе или байпасе канала | ГОСТ Р МЭК 61511-2, руководства производителей систем ПАЗ |
-| S-06 | Требования к байпасам и обходам (разрешение, ограничение времени, журнал, сигнализация; снимает ли снятие ключа действующий пусковой обход; нужно ли снимать пусковой обход, когда процесс вышел в норму, 6.4) | ГОСТ Р МЭК 61511-1-2018, разделы об эксплуатации и обходах |
+| S-06 | Требования к байпасам и обходам (разрешение, ограничение времени, журнал, сигнализация; снимает ли снятие ключа действующий пусковой обход; автоматическое снятие пускового обхода при норме и выбор времени подтверждения нормы `override_clear`, 6.4, D-20) | ГОСТ Р МЭК 61511-1-2018, разделы об эксплуатации и обходах |
 | S-07 | Диагностика источника времени и программы ПЛК (остановившиеся часы, сторожевой таймер задачи) для прикладной программы ПАЗ | ГОСТ Р МЭК 61511-1-2018, требования к логическому решающему устройству; руководство производителя ПЛК |
 
 ---
@@ -1631,3 +1654,4 @@ python tools/codesys/cds.py test && python tools/codesys/cds.py roundtrip
 | 1.0.0 | 2026-10-16 | Интеграция: документы по матрице переименованы по спецификации проекта — `docs/cem/CEM.md` → `docs/cause_effect_matrix.md`, `docs/cem/cem.html` → `docs/cause_effect_matrix.html`, `docs/FAT.md` → `docs/FAT_protocol.md` (заголовки сгенерированного ST ссылаются на новое имя); раздел 3 `docs/SRS.md` генерирует `cemgen` (блок между маркерами `cemgen:sif`, 10.2); в протоколе FAT шаг `FAT-04-99` заменён шагами `FAT-04-91` … `FAT-04-94` по схемам с обоими наборами таблиц истинности, `fat-report` требует результатов по каждому шаблону автотестов (12.7); `PRG_Main` — текст 8.4. Отступления реализации — `docs/ASSUMPTIONS.md` (A-xx, B-xx, I-xx) |
 | 1.1.0 | 2026-10-16 | Ревизия функциональной безопасности (`docs/ASSUMPTIONS.md`, R-01…R-11): «время назад» у источника времени — неисправность (3.3, 3.4, D-19): новый код события `TimeFault := 24`, `FB_Voting` заканчивает байпасы (5.5, 5.7), `FB_CauseEffect` снимает пусковые обходы и завершает идущие задержки причин (6.3, 6.4, 6.9); остановившееся время — ограничение (3.3, S-07); срок нового пускового обхода — от вызова, где он принят (`Preset`, 6.4, D-13); охват CRC описан явно (6.8, D-10); снятие ключа `xOverridePermit` не снимает действующий обход (6.4, S-06); предупреждение CEM-W006 (9.4); тесты 12.3: `Voting_TimeBackwards_BypassRestarts` → `Voting_TimeBackwards_BypassEnds`, добавлены `Cem_TimeBackwards_PendingDelayTrips`, `Cem_TimeBackwards_OverrideEnds`, `Cem_Override_ReRequestAfterExpiryFullTime`, `Cem_Override_CancelAndRequestRestarts` |
 | 1.1.1 | 2026-10-19 | Ревизия функциональной безопасности, продолжение (`docs/ASSUMPTIONS.md`, R-06, R-08, R-12, R-13): CEM-W006 — и для `ext` с `trip_on = 1` (у внешнего входа нет контроля линии, 9.4); записано, что пусковой обход не снимается, когда требование причины ушло (6.4, S-06); мутационная проверка `FB_Voting` и `FB_CauseEffect` выполнена полностью (R-08); тест 12.3 `Common_EnumCodes_MatchContract` проверяет и `TimeFault = 24`. Логика ФБ не менялась |
+| 1.2.0 | 2026-10-19 | Ревизия функциональной безопасности, R-12 (`docs/ASSUMPTIONS.md`): пусковой обход снимается автоматически, когда требования причины нет непрерывно `tOverrideClear` (6.4, D-20); срок `tOverrideMax`, команда, ошибка конфигурации и «время назад» снимают его, как раньше. Новое поле `ST_CauseCfg.tOverrideClear` (проверка `CEM_CFG_CAUSE`: `0 < tOverrideClear < tOverrideMax` при разрешённом обходе; CRC не меняется), состояние `ST_CauseEffectSts.atOverrideClearRemain`, код события `OverrideCleared := 25` (прежние коды не менялись), порядок событий 6.9, временная диаграмма 6.11 дополнена; колонка матрицы `override_clear` (по умолчанию `30s`), правила CEM-E021, CEM-E022, новое CEM-E031 (9.2, 9.4); демо-матрица — 30 с, 1 мин, 30 с (11.3); тесты 12.3: `Cem_Override_ClearsExactlyAtConfirm`, `Cem_Override_ChatteringNotCleared`, `Cem_Override_ReRequestRestartsConfirm`, `Cem_Override_ExpiryWinsTieWithConfirm`, `Cem_TimeBackwards_DuringConfirmEndsOverride`; сценарии 12.4: `Override_ClearsAfterConfirm`, `Override_DemandBackRestartsConfirm`, `Override_ExpiryBoundsConfirm`, `Override_ClearedThenDelayTrips` (83 теста по матрице) |

@@ -2,7 +2,8 @@ coUnit.TEST('Cem_Override_CancelAndRequestRestarts');
 fbRig.stCfg := CfgBase();
 fbRig.Cycle();
 fbRig.stCmd.wOverrideReq := 16#0004;
-fbRig.Step(tStep := T#100MS);                                   // t1: обход причины 3 (10 с)
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);                                   // t1: обход причины 3 (10 с) и требование
 fbRig.Run(tDuration := T#6S, tStep := T#1S);                    // t1 + 6 с
 AssertEquals_TIME(Expected := T#4S, Actual := fbRig.fbCem.stSts.atOverrideRemain[3], Message := 't1 + 6 s: 4 s left');
 fbRig.stCmd.wOverrideCancel := 16#0004;

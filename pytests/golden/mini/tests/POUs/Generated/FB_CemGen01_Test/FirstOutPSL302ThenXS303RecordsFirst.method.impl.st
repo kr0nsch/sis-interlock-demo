@@ -2,21 +2,21 @@
 //   python -m cemgen generate <файл матрицы .csv или .xlsx>
 // Матрица: TEST-U301-CEM, объект U-301, ревизия 1 от 2026-10-16, SHA-256 сетки 9067fda96ae55e67
 coUnit.TEST('Matrix_FirstOutPSL302ThenXS303_RecordsFirst');
-xArmed := fbH017.Arm();
+xArmed := fbH020.Arm();
 AssertTrue(Condition := xArmed, Message := 'armed: all effects energized after reset');
-fbH017.stIo.xPS302A := FALSE;
-fbH017.stIo.xPS302B := FALSE;
-fbH017.Cycle();   // t0
-ltT0 := fbH017.Now();
-fbH017.stIo.xXS303 := TRUE;
-fbH017.Cycle();   // t0
-fbH017.Run(tDuration := T#500MS, tStep := T#500MS);   // t0 + 500 мс
-AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_PSL302, Actual := fbH017.fbApp.stCemSts.uiFirstOut,
+fbH020.stIo.xPS302A := FALSE;
+fbH020.stIo.xPS302B := FALSE;
+fbH020.Cycle();   // t0
+ltT0 := fbH020.Now();
+fbH020.stIo.xXS303 := TRUE;
+fbH020.Cycle();   // t0
+fbH020.Run(tDuration := T#500MS, tStep := T#500MS);   // t0 + 500 мс
+AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_PSL302, Actual := fbH020.fbApp.stCemSts.uiFirstOut,
     Message := 'PSL302: first-out');
-AssertEquals_WORD(Expected := 16#0002, Actual := fbH017.fbApp.stCemSts.wFirstOutMask,
+AssertEquals_WORD(Expected := 16#0002, Actual := fbH020.fbApp.stCemSts.wFirstOutMask,
     Message := 'PSL302: first-out mask');
-AssertEquals_LTIME(Expected := ltT0, Actual := fbH017.fbApp.stCemSts.ltFirstOut,
+AssertEquals_LTIME(Expected := ltT0, Actual := fbH020.fbApp.stCemSts.ltFirstOut,
     Message := 'PSL302: first-out timestamp');
-AssertEquals_WORD(Expected := 16#0006, Actual := fbH017.fbApp.stCemSts.wCauseLatched,
+AssertEquals_WORD(Expected := 16#0006, Actual := fbH020.fbApp.stCemSts.wCauseLatched,
     Message := 'PSL302 then XS303: latched causes');
 coUnit.TEST_FINISHED();

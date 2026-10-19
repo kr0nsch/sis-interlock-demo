@@ -2,6 +2,7 @@ coUnit.TEST('Cem_Override_RepeatIgnored');
 fbRig.stCfg := CfgBase();
 fbRig.Cycle();
 fbRig.stCmd.wOverrideReq := 16#0002;
+fbRig.axCauseIn[2] := TRUE;
 fbRig.Step(tStep := T#100MS);
 fbRig.Step(tStep := T#1M);
 uiEvents := fbRig.fbLog.Count;

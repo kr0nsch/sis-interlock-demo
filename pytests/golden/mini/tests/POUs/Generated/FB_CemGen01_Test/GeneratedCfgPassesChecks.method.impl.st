@@ -10,13 +10,13 @@ AssertEquals_WORD(Expected := stCfg.wMatrixCrc, Actual := wCrc, Message := 'CRC 
 wErr := F_CemCheckCfg(stCfg := stCfg);
 AssertEquals_WORD(Expected := 16#0000, Actual := wErr,
     Message := 'generated CEM_CFG passes F_CemCheckCfg');
-xArmed := fbH021.Arm();
+xArmed := fbH024.Arm();
 AssertTrue(Condition := xArmed, Message := 'armed: all effects energized after reset');
-AssertFalse(Condition := fbH021.fbApp.stCemSts.xCfgError, Message := 'matrix cfg error after arm');
-stVs := fbH021.fbApp.astVoteSts[GVL_SisCfg.CAUSE_TSH301];
+AssertFalse(Condition := fbH024.fbApp.stCemSts.xCfgError, Message := 'matrix cfg error after arm');
+stVs := fbH024.fbApp.astVoteSts[GVL_SisCfg.CAUSE_TSH301];
 AssertEquals_WORD(Expected := 16#0000, Actual := stVs.wCfgErr,
     Message := 'TSH301: voting cfg ok');
-stVs := fbH021.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
+stVs := fbH024.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
 AssertEquals_WORD(Expected := 16#0000, Actual := stVs.wCfgErr,
     Message := 'PSL302: voting cfg ok');
 coUnit.TEST_FINISHED();

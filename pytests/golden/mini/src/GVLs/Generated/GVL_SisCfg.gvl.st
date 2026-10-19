@@ -32,7 +32,7 @@ VAR_GLOBAL CONSTANT
         astCause := [
             (xEnable := TRUE, eSource := E_CauseSource.Voting, tDelay := T#1S),                 // 1 TSH301
             (xEnable := TRUE, eSource := E_CauseSource.Voting, tDelay := T#0S,
-                xOverrideAllowed := TRUE, tOverrideMax := T#10M),                               // 2 PSL302
+                xOverrideAllowed := TRUE, tOverrideMax := T#10M, tOverrideClear := T#30S),      // 2 PSL302
             (xEnable := TRUE, eSource := E_CauseSource.External, tDelay := T#500MS),            // 3 XS303
             (xEnable := FALSE),                                                                 // 4 — резерв
             (xEnable := FALSE),                                                                 // 5 — резерв

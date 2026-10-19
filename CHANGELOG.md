@@ -13,9 +13,9 @@
   `tools/assemble.py`, `tools/check/` (линтер `st_lint.py`, iec_checker, RuSTy), `tools/codesys/cds.py`
   (импорт, сборка, проверка всех объектов, тесты coUnit в Control Win, экспорт, roundtrip, отчёт,
   библиотеки и зависимости) — из шаблона plc-repo-template.
-- Контракт проекта `docs/DESIGN.md` v1.1.1: типы и константы, алгоритмы голосования и исполнителя
+- Контракт проекта `docs/DESIGN.md` v1.2.0: типы и константы, алгоритмы голосования и исполнителя
   матрицы (нормативный псевдокод), журнал событий, формат матрицы `cem/1`, генератор, демо-объект,
-  стратегия испытаний, решения D-01…D-19.
+  стратегия испытаний, решения D-01…D-20.
 - Типы ПАЗ (`src/DUTs/Sis/`): 9 строгих перечислений (схемы MooN, политики деградации, состояния
   каналов и байпасов, виды входа и событий, безопасные состояния) и 12 структур (конфигурация,
   входы, команды и состояния групп голосования и матрицы, событие журнала — 24 байта);
@@ -35,7 +35,7 @@
   источник времени на вызов), функции `F_SisBit`, `F_SisBitMask`, `F_SisLowMask`, `F_SisFirstBit`,
   `F_SisLogEvent`, `F_SisNe43Valid` (NAMUR NE 43), `F_SisAiToEu`.
 - Генератор `cemgen` (Python 3.11+, `python -m cemgen`): загрузка CSV и XLSX, проверка по правилам
-  CEM-E001…E030 и CEM-W001…W006 с номером строки, колонкой и подсказкой; эталонная модель логики
+  CEM-E001…E031 и CEM-W001…W006 с номером строки, колонкой и подсказкой; эталонная модель логики
   (`refmodel.py`, REAL как float32); генерация конфигурации ST и привязки объекта
   (`src/**/Generated/`), сценарных тестов coUnit по матрице и таблиц истинности
   (`tests/**/Generated/`), документов `docs/cause_effect_matrix.md` и `.html` (печать на A3, светлая и
@@ -60,6 +60,22 @@
 
 ### Changed
 
+- Пусковой обход снимается автоматически, когда требования причины нет непрерывно время подтверждения
+  нормы (R-12 закрыта; DESIGN.md v1.2.0, 6.4, D-20): новое поле `ST_CauseCfg.tOverrideClear` (проверка
+  `CEM_CFG_CAUSE`: `0 < tOverrideClear < tOverrideMax`), состояние `ST_CauseEffectSts.atOverrideClearRemain`,
+  код события `OverrideCleared := 25` (прежние коды не менялись). Каждое появление требования
+  перезапускает подтверждение; срок `tOverrideMax` — верхняя граница (в одном вызове срок старше
+  подтверждения); снятие командой, ошибкой конфигурации и при «времени назад» (D-19) — как раньше.
+  Колонка матрицы `override_clear` (по умолчанию `30s`), правила CEM-E021, CEM-E022, новое CEM-E031;
+  демо-матрица: PSLL101 — 30 с, LSLL102 — 1 мин, PSLL108 — 30 с с обоснованием в `notes`. Эталонная
+  модель `cemgen` (по тексту контракта, временная диаграмма 6.11 дополнена), 12 новых сценариев по
+  матрице (`Matrix_<TAG>Override_ClearsAfterConfirm`, `…DemandBackRestartsConfirm`,
+  `…ExpiryBoundsConfirm`, `…ClearedThenDelayTrips`; при пределе 40 тестов в наборе сценарии
+  теперь занимают три набора — добавлен `FB_CemGen03_Test`), граничные тесты
+  `Cem_Override_ClearsExactlyAtConfirm`, `Cem_Override_ChatteringNotCleared`,
+  `Cem_Override_ReRequestRestartsConfirm`, `Cem_Override_ExpiryWinsTieWithConfirm`,
+  `Cem_TimeBackwards_DuringConfirmEndsOverride`; мутации автоснятия O1–O6 — поймано 6 из 6
+  (`docs/ASSUMPTIONS.md`); ревизия демо-матрицы — B; SRS, протокол FAT, матрица в документах, README.
 - `PRG_Main` вызывает программу ПАЗ `PRG_Sis`; в демо без ввода-вывода в первом цикле ставит
   нормальные значения входов.
 - `tools/codesys/config.json`: зависимость plc-process-lib (`PL`, версия `*`, сборка из

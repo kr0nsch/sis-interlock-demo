@@ -36,3 +36,8 @@ TimeBackwardsOverrideEnds();
 OverrideReRequestAfterExpiryFullTime();
 OverrideCancelAndRequestRestarts();
 NoTimeSourceUsesSystemTime();
+OverrideClearsExactlyAtConfirm();
+OverrideChatteringNotCleared();
+OverrideReRequestRestartsConfirm();
+TimeBackwardsDuringConfirmEndsOverride();
+OverrideExpiryWinsTieWithConfirm();

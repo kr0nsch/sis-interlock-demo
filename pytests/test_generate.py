@@ -67,12 +67,16 @@ def test_files_of_section_10_2(demo_outputs: Outputs) -> None:
 
 def test_demo_test_counts(demo_outputs: Outputs) -> None:
     names = [c.name for c in demo_outputs.cases]
-    assert len(names) == 71
-    assert len(set(names)) == 71
+    assert len(names) == 83
+    assert len(set(names)) == 83
     kinds = {
         "Demand_": 10,
         "Delay_": 8,
         "Override_ExpiresThenTrips": 3,
+        "Override_ClearsAfterConfirm": 3,
+        "Override_DemandBackRestartsConfirm": 3,
+        "Override_ExpiryBoundsConfirm": 3,
+        "Override_ClearedThenDelayTrips": 3,
         "Override_Denied": 7,
         "Reset_": 10,
         "ChannelInvalid_": 10,
@@ -89,12 +93,12 @@ def test_demo_test_counts(demo_outputs: Outputs) -> None:
     }
     assert common <= set(names)
     suites = [p for p in demo_outputs.files if re.search(r"FB_CemGen\d\d_Test\.decl\.st$", p)]
-    assert len(suites) == 2
+    assert len(suites) == 3
 
 
 def test_suite_structure(demo_outputs: Outputs) -> None:
     files = demo_outputs.files
-    for suite in ("FB_CemGen01_Test", "FB_CemGen02_Test", "FB_VoteTruth_Test"):
+    for suite in ("FB_CemGen01_Test", "FB_CemGen02_Test", "FB_CemGen03_Test", "FB_VoteTruth_Test"):
         base = f"tests/POUs/Generated/{suite}"
         body = files[f"{base}/{suite}.impl.st"]
         methods = sorted(
@@ -118,7 +122,8 @@ def test_suite_structure(demo_outputs: Outputs) -> None:
     assert sum(1 for p in files if "/FB_VoteTruth_Test/" in p and p.endswith(".method.impl.st")) == 36 + 6
     gvl = files["tests/GVLs/Generated/GVL_TestsGenerated.gvl.st"]
     assert "{attribute 'linkalways'}" in gvl
-    assert "fbCemGen01Test" in gvl and "fbCemGen02Test" in gvl and "fbVoteTruthTest" in gvl
+    assert "fbCemGen01Test" in gvl and "fbCemGen02Test" in gvl and "fbCemGen03Test" in gvl
+    assert "fbVoteTruthTest" in gvl
 
 
 def test_gvl_siscfg_content(demo_outputs: Outputs) -> None:
@@ -130,7 +135,8 @@ def test_gvl_siscfg_content(demo_outputs: Outputs) -> None:
     assert "CAUSE_PSHH101 " in gvl and "CAUSE_COUNT" in gvl and "EFFECT_COUNT" in gvl
     assert re.search(r"AI_PT101A_NORMAL_MA\s*: REAL := 10\.0;", gvl)
     assert "rTripLimit_eu := 0.9, rHyst_eu := 0.02" in gvl
-    assert "tOverrideMax := T#15M" in gvl
+    assert "tOverrideMax := T#15M, tOverrideClear := T#30S" in gvl
+    assert "tOverrideMax := T#30M, tOverrideClear := T#1M" in gvl
 
 
 def test_fb_sisapp_bindings(demo_outputs: Outputs) -> None:
@@ -153,6 +159,9 @@ def test_mini_without_keys_and_ext(mini_outputs: Outputs) -> None:
     names = [c.name for c in mini_outputs.cases]
     assert "Matrix_Start_EnergizedWithoutReset" in names
     assert not any(n.startswith("Matrix_XS303ChannelInvalid") or n.startswith("Matrix_XS303Bypass") for n in names)
+    # PSL302: обход без задержки причины — сценария «задержка после автоснятия» нет
+    assert "Matrix_PSL302Override_ClearsAfterConfirm" in names
+    assert "Matrix_PSL302Override_ClearedThenDelayTrips" not in names
 
 
 # --- формат -------------------------------------------------------------------------------------------

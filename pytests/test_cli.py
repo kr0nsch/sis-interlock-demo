@@ -25,7 +25,7 @@ def test_validate_json(capsys: pytest.CaptureFixture[str]) -> None:
     assert data["ok"] is True and data["errors"] == 0
     assert data["matrix"] == {
         "document": "SIS-V101-CEM",
-        "revision": "A",
+        "revision": "B",
         "causes": 10,
         "effects": 7,
         "crc": "16#CD40",
@@ -60,7 +60,7 @@ def test_generate_check_and_write(tmp_path: Path, capsys: pytest.CaptureFixture[
     assert main(["generate", str(MINI_CSV), "--root", str(tmp_path), "--check"]) == 1
     assert "новый:" in capsys.readouterr().out
     assert main(["generate", str(MINI_CSV), "--root", str(tmp_path)]) == 0
-    assert "тестов по матрице 21" in capsys.readouterr().out
+    assert "тестов по матрице 24" in capsys.readouterr().out
     assert main(["generate", str(MINI_CSV), "--root", str(tmp_path), "--check"]) == 0
     assert (tmp_path / "docs/cause_effect_matrix.html").is_file()
     assert main(["generate", str(MINI_CSV), "--root", str(tmp_path), "--strict"]) == 1  # W005 — файлы не пишутся

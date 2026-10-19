@@ -207,6 +207,7 @@ class CauseCfg:
     delay_ms: int = 0
     override_allowed: bool = False
     override_max_ms: int = 0
+    override_clear_ms: int = 0  # tOverrideClear: подтверждение нормы для автоснятия обхода (6.4)
 
 
 @dataclass
@@ -270,6 +271,7 @@ def cem_cfg(matrix: Matrix) -> CemCfg:
             delay_ms=cause.delay_ms,
             override_allowed=cause.override,
             override_max_ms=cause.override_time_ms,
+            override_clear_ms=cause.override_clear_ms,
         )
     for effect in matrix.effects:
         cfg.effects[effect.no - 1] = EffectCfg(effect.safe_state, matrix.effect_mask(effect.no))
@@ -610,6 +612,7 @@ def cem_check_cfg(cfg: CemCfg) -> int:
                 c.source not in (CauseSource.VOTING, CauseSource.EXTERNAL)
                 or c.delay_ms > limits.SIS_DELAY_MAX_MS
                 or (c.override_allowed and (c.override_max_ms == 0 or c.override_max_ms > limits.SIS_OVERRIDE_MAX_MS))
+                or (c.override_allowed and (c.override_clear_ms == 0 or c.override_clear_ms >= c.override_max_ms))
             ):
                 err |= limits.CEM_CFG_CAUSE
         allowed = low_mask(cfg.cause_count)
@@ -655,6 +658,7 @@ class CauseEffectSts:
     trip_count: int = 0
     override_remain_ms: list[int] = field(default_factory=lambda: [0] * NC)
     delay_remain_ms: list[int] = field(default_factory=lambda: [0] * NC)
+    override_clear_remain_ms: list[int] = field(default_factory=lambda: [0] * NC)
 
 
 def _lowest_bit(mask: int) -> int:
@@ -671,6 +675,7 @@ class CauseEffect:
         self.sts = CauseEffectSts()
         self.delays = [Delay() for _ in range(NC)]
         self.override_timers = [Delay() for _ in range(NC)]
+        self.clear_timers = [Delay() for _ in range(NC)]  # подтверждение нормы для автоснятия обхода (6.4, п. 5)
         self.latched = 0
         self.overridden = [False] * NC
         self.cfg_latch = False
@@ -772,19 +777,27 @@ class CauseEffect:
                     c = cfg.causes[i]
                     if c.enable and c.override_allowed and c.override_max_ms > 0 and override_permit:
                         self.overridden[i] = True
-                        self.override_timers[i].preset(False)  # срок — от этого вызова (6.4, п. 4)
+                        # срок и подтверждение нормы — от ltNow этого вызова (6.4, п. 3; D-13)
+                        self.override_timers[i].preset(False)
+                        self.clear_timers[i].preset(False)
                         ev(EventKind.OVERRIDE_ON, i + 1)
                     else:
                         ev(EventKind.OVERRIDE_DENIED, i + 1)
-        for i in range(NC):  # таймеры
+        for i in range(NC):  # п. 4: срок — верхняя граница, проверяется раньше подтверждения нормы
             self.override_timers[i](self.overridden[i], cfg.causes[i].override_max_ms, 0, now)
             if self.overridden[i] and self.override_timers[i].x_out:
                 self.overridden[i] = False
                 ev(EventKind.OVERRIDE_EXPIRED, i + 1)
+        for i in range(NC):  # п. 5: автоснятие — сырого требования нет непрерывно tOverrideClear (R-12)
+            self.clear_timers[i](self.overridden[i] and not present[i], cfg.causes[i].override_clear_ms, 0, now)
+            if self.overridden[i] and self.clear_timers[i].x_out:
+                self.overridden[i] = False
+                ev(EventKind.OVERRIDE_CLEARED, i + 1)
         cmd.override_req = 0
         cmd.override_cancel = 0
         cmd.startup_override = False
         override_remain = [self.override_timers[i].remaining_ms if self.overridden[i] else 0 for i in range(NC)]
+        clear_remain = [self.clear_timers[i].remaining_ms if self.overridden[i] else 0 for i in range(NC)]
         # 5. Сброс (6.5)
         reset_req = cmd.reset or (reset_hw and not self.reset_hw_prev)
         self.reset_hw_prev = reset_hw
@@ -863,6 +876,7 @@ class CauseEffect:
             trip_count=self.trip_count,
             override_remain_ms=override_remain,
             delay_remain_ms=[self.delays[i].remaining_ms for i in range(NC)],
+            override_clear_remain_ms=clear_remain,
         )
         self.first_call = False
 

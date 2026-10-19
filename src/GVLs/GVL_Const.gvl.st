@@ -49,7 +49,7 @@ VAR_GLOBAL CONSTANT
 
     // Биты ошибок конфигурации матрицы (F_CemCheckCfg, ST_CauseEffectSts.wCfgErr)
     CEM_CFG_COUNT : WORD := 16#0001;          // uiCauseCount или uiEffectCount вне 1..MAX
-    CEM_CFG_CAUSE : WORD := 16#0002;          // используемая причина: источник, задержка, обход
+    CEM_CFG_CAUSE : WORD := 16#0002;          // используемая причина: источник, задержка, срок и автоснятие обхода
     CEM_CFG_EFFECT : WORD := 16#0004;         // используемое следствие: состояние, маска; маска неиспользуемого
     CEM_CFG_CRC : WORD := 16#0008;            // F_CemCrc(stCfg) <> stCfg.wMatrixCrc
 

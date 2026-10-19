@@ -107,6 +107,7 @@ class EventKind(IntEnum):
     CFG_OK = 22
     START_TRIP = 23
     TIME_FAULT = 24
+    OVERRIDE_CLEARED = 25
 
 
 # Имена типов и элементов перечислений в ST
@@ -194,6 +195,7 @@ _ST_MEMBER: dict[type[IntEnum], dict[int, str]] = {
         EventKind.CFG_OK: "CfgOk",
         EventKind.START_TRIP: "StartTrip",
         EventKind.TIME_FAULT: "TimeFault",
+        EventKind.OVERRIDE_CLEARED: "OverrideCleared",
     },
 }
 

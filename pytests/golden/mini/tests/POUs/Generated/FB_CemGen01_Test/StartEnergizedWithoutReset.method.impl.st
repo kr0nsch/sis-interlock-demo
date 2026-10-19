@@ -2,10 +2,10 @@
 //   python -m cemgen generate <файл матрицы .csv или .xlsx>
 // Матрица: TEST-U301-CEM, объект U-301, ревизия 1 от 2026-10-16, SHA-256 сетки 9067fda96ae55e67
 coUnit.TEST('Matrix_Start_EnergizedWithoutReset');
-fbH019.SetNormal();
-fbH019.Cycle();   // t0
-AssertTrue(Condition := fbH019.stIo.xQXV301, Message := 'start: XV301 must stay energized on first call');
-AssertTrue(Condition := fbH019.stIo.xQM302, Message := 'start: M302 must stay energized on first call');
-AssertEquals_UINT(Expected := GVL_Const.SIS_FIRST_OUT_NONE, Actual := fbH019.fbApp.stCemSts.uiFirstOut,
+fbH022.SetNormal();
+fbH022.Cycle();   // t0
+AssertTrue(Condition := fbH022.stIo.xQXV301, Message := 'start: XV301 must stay energized on first call');
+AssertTrue(Condition := fbH022.stIo.xQM302, Message := 'start: M302 must stay energized on first call');
+AssertEquals_UINT(Expected := GVL_Const.SIS_FIRST_OUT_NONE, Actual := fbH022.fbApp.stCemSts.uiFirstOut,
     Message := 'start: first-out');
 coUnit.TEST_FINISHED();

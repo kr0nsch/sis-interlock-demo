@@ -91,8 +91,11 @@ ERROR_CASES: list[tuple[str, str, Edit]] = [
     ("CEM-E021", "больше предела", lambda s: s.set_cause(1, "delay", "11m")),
     ("CEM-E021", "не разбирается", lambda s: s.set_cause(1, "delay", "2 s")),
     ("CEM-E021", "test_step", lambda s: s.set_header("test_step", "0s")),
+    ("CEM-E021", "подтверждение нормы не кратно шагу", lambda s: s.set_cause(2, "override_clear", "30.05s")),
+    ("CEM-E021", "подтверждение нормы больше предела", lambda s: s.set_cause(2, "override_clear", "3h")),
     ("CEM-E022", "обход без срока", lambda s: s.set_cause(2, "override_time", "")),
     ("CEM-E022", "срок без обхода", lambda s: s.set_cause(1, "override_time", "5m")),
+    ("CEM-E022", "подтверждение нормы без обхода", lambda s: s.set_cause(1, "override_clear", "30s")),
     ("CEM-E023", "bypass_max > N − 1", lambda s: s.set_cause(1, "bypass_max", "3")),
     ("CEM-E023", "bypass_time 0", lambda s: s.set_cause(1, "bypass_time", "0s")),
     ("CEM-E024", "общий канал, разная шкала", lambda s: s.set_cause(2, "range_hi", "2.5")),
@@ -103,6 +106,13 @@ ERROR_CASES: list[tuple[str, str, Edit]] = [
     ("CEM-E029", "enable", lambda s: s.set_cause(1, "enable", "maybe")),
     ("CEM-E029", "start_tripped", lambda s: s.set_header("start_tripped", "sometimes")),
     ("CEM-E030", "стимул вне 3,8…20,5 мА", lambda s: s.set_cause(1, "setpoint", "1.55").set_cause(1, "hyst", "0.2")),
+    ("CEM-E031", "подтверждение нормы = срок", lambda s: s.set_cause(2, "override_clear", "15m")),
+    ("CEM-E031", "подтверждение нормы 0", lambda s: s.set_cause(2, "override_clear", "0s")),
+    (
+        "CEM-E031",
+        "умолчание 30s не короче срока",
+        lambda s: s.set_cause(2, "override_clear", "").set_cause(2, "override_time", "30s"),
+    ),
 ]
 
 
@@ -122,7 +132,11 @@ WARNING_CASES: list[tuple[str, str, Edit]] = [
         "стимул вызывает другую причину",
         lambda s: s.set_cause(2, "trip_on", "high").set_cause(2, "setpoint", "0.95").set_cause(2, "normal", "0.60"),
     ),
-    ("CEM-W003", "обход короче задержки", lambda s: s.set_cause(2, "override_time", "3s")),
+    (
+        "CEM-W003",
+        "обход короче задержки",
+        lambda s: s.set_cause(2, "override_time", "3s").set_cause(2, "override_clear", "1s"),
+    ),
     (
         "CEM-W004",
         "рассогласование при N = 1",
@@ -201,6 +215,32 @@ def test_comma_decimal_and_case_insensitive_units(tmp_path: Path) -> None:
     analog = result.matrix.cause(1).analog
     assert analog is not None and str(analog.setpoint) == "0.90"
     assert result.matrix.cause(1).delay_ms == 2000
+
+
+def test_override_clear_values_and_default(tmp_path: Path) -> None:
+    # Демо-матрица: подтверждение нормы для автоснятия обходов задано явно (DESIGN.md, 11.3)
+    demo = load(DEMO_CSV).matrix
+    assert demo is not None
+    assert [(c.tag, c.override_clear_ms) for c in demo.causes if c.override] == [
+        ("PSLL101", 30_000),
+        ("LSLL102", 60_000),
+        ("PSLL108", 30_000),
+    ]
+    assert all(c.override_clear_ms == 0 for c in demo.causes if not c.override)
+    # Пустая ячейка при override = yes — по умолчанию 30s; у мини-матрицы колонки нет вовсе
+    result = run(tmp_path, lambda s: s.set_cause(4, "override_clear", ""))
+    assert result.matrix is not None and result.matrix.cause(4).override_clear_ms == 30_000
+    mini = load(MINI_CSV).matrix
+    assert mini is not None and mini.cause(2).override_clear_ms == 30_000
+    # Граница: на шаг короче срока — допустимо
+    result = run(tmp_path, lambda s: s.set_cause(2, "override_clear", "899.9s"))
+    assert result.matrix is not None and result.matrix.cause(2).override_clear_ms == 15 * 60_000 - 100
+
+
+def test_override_clear_error_does_not_cascade(tmp_path: Path) -> None:
+    # Срок обхода с ошибкой — отношение подтверждения к сроку не проверяется
+    result = run(tmp_path, lambda s: s.set_cause(2, "override_time", "0s"))
+    assert codes(result) == {"CEM-E022"}
 
 
 def test_bom_and_crlf_accepted(tmp_path: Path) -> None:

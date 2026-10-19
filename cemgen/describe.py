@@ -27,7 +27,13 @@ def bypass_text(cause: Cause) -> str:
 
 
 def override_text(cause: Cause) -> str:
-    return format_duration_ru(cause.override_time_ms) if cause.override else "—"
+    """Пусковой обход словами: срок и подтверждение нормы для автоснятия (DESIGN.md, 6.4)."""
+    if not cause.override:
+        return "—"
+    return (
+        f"{format_duration_ru(cause.override_time_ms)}, снятие после "
+        f"{format_duration_ru(cause.override_clear_ms)} нормы"
+    )
 
 
 def degradation_text(cause: Cause) -> str:

@@ -215,10 +215,21 @@ def build_sections(matrix: Matrix) -> list[Section]:
                 expected.append("байпас запрещён: Denied, BypassDenied")
         tests.append(f"Matrix_{c.tag}Override_*")
         if c.override:
-            parts.append(f"пусковой обход на {format_duration_ru(c.override_time_ms)} при требовании")
+            clear = format_duration_ru(c.override_clear_ms)
+            parts.append(
+                f"пусковой обход на {format_duration_ru(c.override_time_ms)} при требовании; норма; "
+                "требование снова во время подтверждения нормы"
+            )
             expected.append(
                 f"обход действует до t0 + {format_duration_ru(c.override_time_ms)}, "
-                "затем OverrideExpired и срабатывание"
+                "затем OverrideExpired и срабатывание; "
+                f"при норме обход снимается через {clear} (OverrideCleared), требование во время подтверждения "
+                "перезапускает его, срок остаётся верхней границей"
+                + (
+                    f"; после снятия новое требование — срабатывание через {format_duration_ru(c.delay_ms)}"
+                    if c.delay_ms
+                    else ""
+                )
             )
         else:
             parts.append("запрос пускового обхода")
@@ -229,7 +240,7 @@ def build_sections(matrix: Matrix) -> list[Section]:
             "FAT-05-99",
             "Логика байпасов и обходов",
             "граничные случаи ФБ",
-            "сроки ровно, пределы числа, снятие ключом, повторные запросы",
+            "сроки ровно, пределы числа, снятие ключом, повторные запросы, автоснятие обхода при норме и дребезг",
             ("Voting_Bypass_*", "Cem_Override_*"),
         )
     )

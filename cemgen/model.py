@@ -131,6 +131,7 @@ class Cause:
     bypass_time_ms: int
     override: bool
     override_time_ms: int
+    override_clear_ms: int  # подтверждение нормы для автоснятия обхода; 0 — обхода нет
     enable: bool
     notes: str
     effects: frozenset[int]  # номера следствий с «X»

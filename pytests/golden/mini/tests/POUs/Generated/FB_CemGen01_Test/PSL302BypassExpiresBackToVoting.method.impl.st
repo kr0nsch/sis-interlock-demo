@@ -2,39 +2,39 @@
 //   python -m cemgen generate <файл матрицы .csv или .xlsx>
 // Матрица: TEST-U301-CEM, объект U-301, ревизия 1 от 2026-10-16, SHA-256 сетки 9067fda96ae55e67
 coUnit.TEST('Matrix_PSL302Bypass_ExpiresBackToVoting');
-xArmed := fbH011.Arm();
+xArmed := fbH014.Arm();
 AssertTrue(Condition := xArmed, Message := 'armed: all effects energized after reset');
-fbH011.Keys(xBypass := TRUE, xOverride := FALSE);
-fbH011.stCmd.astVote[GVL_SisCfg.CAUSE_PSL302].axBypassReq[1] := TRUE;   // байпас PS302A
-fbH011.Cycle();   // t0
-stVs := fbH011.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
+fbH014.Keys(xBypass := TRUE, xOverride := FALSE);
+fbH014.stCmd.astVote[GVL_SisCfg.CAUSE_PSL302].axBypassReq[1] := TRUE;   // байпас PS302A
+fbH014.Cycle();   // t0
+stVs := fbH014.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
 AssertEquals_INT(Expected := TO_INT(E_BypassState.Active), Actual := TO_INT(stVs.aeBypass[1]),
     Message := 'PSL302: bypass channel 1 active');
-fbH011.stIo.xPS302A_Ok := FALSE;
-fbH011.Cycle();   // t0
-stVs := fbH011.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
+fbH014.stIo.xPS302A_Ok := FALSE;
+fbH014.Cycle();   // t0
+stVs := fbH014.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
 AssertEquals_INT(Expected := TO_INT(E_ChannelState.Bypassed), Actual := TO_INT(stVs.aeChState[1]),
     Message := 'PSL302: bypassed channel state');
 AssertFalse(Condition := stVs.xTrip, Message := 'PSL302: voting with bypassed channel');
-fbH011.Run(tDuration := T#59M59S500MS, tStep := T#1M12S);   // t0 + 59 мин 59,5 с
-stVs := fbH011.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
+fbH014.Run(tDuration := T#59M59S500MS, tStep := T#1M12S);   // t0 + 59 мин 59,5 с
+stVs := fbH014.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
 AssertEquals_INT(Expected := TO_INT(E_BypassState.Active), Actual := TO_INT(stVs.aeBypass[1]),
     Message := 'PSL302: bypass active one step before max');
 AssertEquals_TIME(Expected := T#500MS, Actual := stVs.atBypassRemain[1],
     Message := 'PSL302: one step of bypass left');
-AssertEquals_WORD(Expected := 16#0000, Actual := fbH011.fbApp.stCemSts.wCauseLatched,
+AssertEquals_WORD(Expected := 16#0000, Actual := fbH014.fbApp.stCemSts.wCauseLatched,
     Message := 'PSL302: latched causes while bypassed');
-fbH011.MarkEvents();
-fbH011.Step(tStep := T#500MS);   // t0 + 1 ч
-AssertTrue(Condition := fbH011.HasEvent(eKind := E_SisEventKind.BypassExpired,
+fbH014.MarkEvents();
+fbH014.Step(tStep := T#500MS);   // t0 + 1 ч
+AssertTrue(Condition := fbH014.HasEvent(eKind := E_SisEventKind.BypassExpired,
     uiCause := GVL_SisCfg.CAUSE_PSL302), Message := 'PSL302: BypassExpired logged');
-stVs := fbH011.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
+stVs := fbH014.fbApp.astVoteSts[GVL_SisCfg.CAUSE_PSL302];
 AssertEquals_INT(Expected := TO_INT(E_BypassState.Expired), Actual := TO_INT(stVs.aeBypass[1]),
     Message := 'PSL302: bypass expired exactly at max');
 AssertEquals_INT(Expected := TO_INT(E_ChannelState.Invalid), Actual := TO_INT(stVs.aeChState[1]),
     Message := 'PSL302: channel back to voting');
-AssertEquals_WORD(Expected := 16#0000, Actual := fbH011.fbApp.stCemSts.wCauseLatched,
+AssertEquals_WORD(Expected := 16#0000, Actual := fbH014.fbApp.stCemSts.wCauseLatched,
     Message := 'PSL302: latched causes after bypass expired');
-AssertTrue(Condition := fbH011.stIo.xQXV301, Message := 'PSL302: XV301 must stay energized after bypass expired');
-AssertTrue(Condition := fbH011.stIo.xQM302, Message := 'PSL302: M302 must stay energized after bypass expired');
+AssertTrue(Condition := fbH014.stIo.xQXV301, Message := 'PSL302: XV301 must stay energized after bypass expired');
+AssertTrue(Condition := fbH014.stIo.xQM302, Message := 'PSL302: M302 must stay energized after bypass expired');
 coUnit.TEST_FINISHED();

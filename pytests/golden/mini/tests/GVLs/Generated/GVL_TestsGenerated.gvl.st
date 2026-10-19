@@ -14,5 +14,5 @@
 {attribute 'linkalways'}
 VAR_GLOBAL
     fbVoteTruthTest : FB_VoteTruth_Test;   // таблицы истинности голосования (36 тестов)
-    fbCemGen01Test  : FB_CemGen01_Test;    // сценарии по матрице, тесты 1–21
+    fbCemGen01Test  : FB_CemGen01_Test;    // сценарии по матрице, тесты 1–24
 END_VAR

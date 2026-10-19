@@ -85,6 +85,7 @@ CAUSE_COLUMNS: tuple[str, ...] = (
     "bypass_time",
     "override",
     "override_time",
+    "override_clear",
     "enable",
     "notes",
 )
@@ -775,6 +776,7 @@ def _parse_cause(
                 err("CEM-E022", "override_time", "override_time 0 при override = yes", "задайте длительность > 0")
     elif override is False and override_time_text:
         err("CEM-E022", "override_time", "override_time при override = no", "очистите ячейку или разрешите обход")
+    override_clear = _override_clear(d, override, override_time, test_step, ctx)
     # enable
     enable_text = d.text("enable")
     enable = parse_bool(enable_text) if enable_text else True
@@ -798,6 +800,7 @@ def _parse_cause(
         return None
     assert no is not None and signal is not None and delay is not None and bypass_max is not None
     assert bypass_time is not None and override is not None and override_time is not None and enable is not None
+    assert override_clear is not None
     if override_time and delay is not None and override_time < delay:
         ctx.warn(
             "CEM-W003",
@@ -847,11 +850,70 @@ def _parse_cause(
         bypass_time_ms=bypass_time,
         override=override,
         override_time_ms=override_time,
+        override_clear_ms=override_clear,
         enable=enable,
         notes=d.text("notes"),
         effects=frozenset(effects),
         row=line,
     )
+
+
+def _override_clear(
+    d: _Draft, override: bool | None, override_time: int | None, test_step: int, ctx: _Ctx
+) -> int | None:
+    """``override_clear`` → ``tOverrideClear`` (DESIGN.md, 6.4, 9.2): 0 < значение < ``override_time``."""
+    line = d.row.line
+    text = d.text("override_clear")
+    if not override:
+        if override is False and text:
+            ctx.error(
+                "CEM-E022",
+                line,
+                d.col("override_clear"),
+                "override_clear при override = no",
+                "очистите ячейку или разрешите обход",
+            )
+            return None
+        return 0
+    if not text:
+        value = limits.DEFAULT_OVERRIDE_CLEAR_MS
+        shown = f"override_clear по умолчанию ({_matrix_duration(value)})"
+        if value % test_step:
+            ctx.error(
+                "CEM-E021",
+                line,
+                d.col("override") or d.col("override_time"),
+                f"{shown} не кратна test_step ({test_step} мс)",
+                "задайте override_clear явно, кратно шагу испытаний",
+            )
+            return None
+    else:
+        parsed = _duration(d, "override_clear", test_step, limits.SIS_OVERRIDE_MAX_MS, ctx)
+        if parsed is None:
+            return None
+        value = parsed
+        shown = f"override_clear {text}"
+    if not override_time:
+        return value  # срок обхода с ошибкой (CEM-E021, CEM-E022): отношение не проверяется — без каскада
+    if value == 0 or value >= override_time:
+        ctx.error(
+            "CEM-E031",
+            line,
+            d.col("override_clear") or d.col("override_time"),
+            f"{shown} — нужно больше 0 и меньше override_time {d.text('override_time')}: "
+            "иначе обход не снимется при норме раньше срока или снимется в вызове включения",
+            "задайте override_clear — выдержку устойчивой нормы — короче срока обхода",
+        )
+        return None
+    return value
+
+
+def _matrix_duration(ms: int) -> str:
+    """Длительность в записи матрицы: ``30s``, ``1m``, ``500ms``."""
+    for unit, size in (("h", 3_600_000), ("m", 60_000), ("s", 1000)):
+        if ms % size == 0 and ms >= size:
+            return f"{ms // size}{unit}"
+    return f"{ms}ms"
 
 
 def _duration(

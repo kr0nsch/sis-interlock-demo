@@ -21,10 +21,14 @@
 
 ## Последний прогон
 
-Весь репозиторий после интеграции и ревизии функциональной безопасности (логика ПАЗ с обработкой неисправности источника времени, DESIGN.md 1.1.0; `PRG_Main` по 8.4; сгенерированный по матрице код и тесты), 16.10.2026, Windows, локально.
+Весь репозиторий после интеграции и ревизии функциональной безопасности (логика ПАЗ с обработкой неисправности источника времени, DESIGN.md 1.1.0; `PRG_Main` по 8.4; сгенерированный по матрице код и тесты), 16.10.2026, Windows, локально; повторно — 19.10.2026 после автоснятия пускового обхода (DESIGN.md 1.2.0, R-12).
 
 | Дата | Инструмент | Вход | Итог |
 |---|---|---|---|
+| 2026-10-19 | `st_lint --strict` | `src/`, `tests/` (747 файлов) | 0 ошибок, 0 предупреждений |
+| 2026-10-19 | `run_iec_checker.py` (iec_checker 0.4) | 50 объектов `src/` | ошибок разбора нет; необоснованных 0; обоснованных 300; артефактов сборки 15 (CP3) |
+| 2026-10-19 | `run_iec_checker.py --tests` (iec_checker 0.4) | 81 объект `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 2195; артефактов сборки 290 |
+| 2026-10-19 | `run_rusty.py` (RuSTy 1.0.6, `plc --check`) | 47 файлов `build/assembled/rusty/`, исключено 35 (`rusty_exclude.txt`) | 0 ошибок; предупреждения E049 и E040, как раньше |
 | 2026-10-16 | `st_lint --strict` | `src/`, `tests/` (711 файлов) | 0 ошибок, 0 предупреждений |
 | 2026-10-16 | `run_iec_checker.py` (iec_checker 0.4) | 50 объектов `src/` | ошибок разбора нет; необоснованных 0; обоснованных 296; артефактов сборки 15 (CP3) |
 | 2026-10-16 | `run_iec_checker.py --tests` (iec_checker 0.4) | 80 объектов `src/` и `tests/` | ошибок разбора нет; необоснованных 0; обоснованных 2104; артефактов сборки 266 |
@@ -36,17 +40,19 @@
 
 ## Логика ПАЗ (`src/POUs/Sis/`, `PRG_Main`) — команда A
 
-Находки по коду команды A (`run_iec_checker.py`, только `src/`): CP3 — 183, L17 — 56 (55 в
-`src/POUs/Sis/`, 1 в `PRG_Main`), CP9 — 12, UnusedVariable — 19; артефактов сборки 15. Прирост после
-ревизии (CP3 +4, L17 +5) — новые ветви обработки «времени назад» в `FB_Voting` и `FB_CauseEffect` (D-19).
+Находки по коду команды A (`run_iec_checker.py`, только `src/`, 19.10.2026): CP3 — 185, L17 — 57 (56 в
+`src/POUs/Sis/`, 1 в `PRG_Main`), CP9 — 12, UnusedVariable — 20; артефактов сборки 15. Прирост после
+ревизии (CP3 +4, L17 +5) — новые ветви обработки «времени назад» в `FB_Voting` и `FB_CauseEffect` (D-19);
+затем (CP3 +2, L17 +1, UnusedVariable +1) — автоснятие пускового обхода: таймеры подтверждения нормы
+`afbOvrClear` и ветвь снятия в `FB_CauseEffect`, проверка `tOverrideClear` в `F_CemCheckCfg` (R-12, D-20).
 
 | Правило | Файл | Находка | Решение / обоснование |
 |---|---|---|---|
 | PLCOPEN-CP3 | все POU `src/` | «Variable … shall be initialized before being used» | Обосновано общей записью: переменная без явного начального значения получает значение по умолчанию своего типа (МЭК 61131-3, CODESYS); вариант сборки `iec-checker` убирает неконстантные начальные значения (`:= E_VoteArch.None`, `:= [3(TRUE)]`) |
-| PLCOPEN-CP9 | `FB_Voting`, `FB_CauseEffect`, `FB_SisUnit`, `F_VoteEval`, `F_VoteCheckCfg`, `F_CemCheckCfg` | «Code is too complex» (iec_checker: 233, 274, 24, 54, 31, 36 по McCabe) | Обосновано. Тела — нормативная последовательность шагов контракта (5.2, 5.5, 5.9, 6.3, 6.8, 8.1) с номерами шагов в комментариях; порядок шагов задаёт порядок событий журнала, и деление на методы его спрятало бы (у `FB_Voting` методов по 5.4 нет). Классическая цикломатическая сложность (точки ветвления `IF`/`ELSIF`/`FOR`/`WHILE`/метки `CASE` + 1, без логических операций): `FB_CauseEffect` — 55, `FB_Voting` — 45, `F_VoteEval` — 14, `F_CemCheckCfg` — 11, `F_VoteCheckCfg` — 9, `FB_SisUnit` — 5. Поведение покрыто граничными тестами (раздел 12.3) и исчерпывающими таблицами истинности `F_VoteEval` и `FB_Voting` |
-| PLCOPEN-L17 | `src/POUs/Sis/*` (55) | «Each IF instruction should have an ELSE clause» | Обосновано: у условий нет действия «иначе» — событие по смене состояния, бит ошибки конфигурации, счётчик, поиск младшего бита, реакция на «время назад». Пустая ветвь `ELSE` только добавила бы шум (как в plc-process-lib) |
+| PLCOPEN-CP9 | `FB_Voting`, `FB_CauseEffect`, `FB_SisUnit`, `F_VoteEval`, `F_VoteCheckCfg`, `F_CemCheckCfg` | «Code is too complex» (iec_checker: 233, 292, 24, 54, 31, 36 по McCabe) | Обосновано. Тела — нормативная последовательность шагов контракта (5.2, 5.5, 5.9, 6.3, 6.8, 8.1) с номерами шагов в комментариях; порядок шагов задаёт порядок событий журнала, и деление на методы его спрятало бы (у `FB_Voting` методов по 5.4 нет). Классическая цикломатическая сложность (точки ветвления `IF`/`ELSIF`/`FOR`/`WHILE`/метки `CASE` + 1, без логических операций): `FB_CauseEffect` — 57, `FB_Voting` — 45, `F_VoteEval` — 14, `F_CemCheckCfg` — 11, `F_VoteCheckCfg` — 9, `FB_SisUnit` — 5. Поведение покрыто граничными тестами (раздел 12.3) и исчерпывающими таблицами истинности `F_VoteEval` и `FB_Voting` |
+| PLCOPEN-L17 | `src/POUs/Sis/*` (56) | «Each IF instruction should have an ELSE clause» | Обосновано: у условий нет действия «иначе» — событие по смене состояния, бит ошибки конфигурации, счётчик, поиск младшего бита, реакция на «время назад». Пустая ветвь `ELSE` только добавила бы шум (как в plc-process-lib) |
 | PLCOPEN-L17 | `PRG_Main` (1) | то же | Обосновано: нормальные значения входов ставятся только в первом цикле демо без ввода-вывода (DESIGN.md, 8.4) — действия «иначе» нет |
-| UnusedVariable | `FB_Voting` (`afbBypass`, `fbDisc`, `stIn`, `stCmd`, `stSts`), `FB_CauseEffect` (`afbDelay`, `afbOverride`, `stCmd`, `stSts`), `FB_SisUnit` (`afbVote`, `fbCem`), `F_VoteCheckCfg`, `F_CemCrc` (`stCfg`) | «Found unused local variable» | Ложное срабатывание iec_checker 0.4: экземпляры ФБ используются вызовом (`fbDisc(...)`, `afbBypass[k](...)`) и чтением выходов, структуры — обращением к полям; это он не считает использованием |
+| UnusedVariable | `FB_Voting` (`afbBypass`, `fbDisc`, `stIn`, `stCmd`, `stSts`), `FB_CauseEffect` (`afbDelay`, `afbOverride`, `afbOvrClear`, `stCmd`, `stSts`), `FB_SisUnit` (`afbVote`, `fbCem`), `F_VoteCheckCfg`, `F_CemCrc` (`stCfg`) | «Found unused local variable» | Ложное срабатывание iec_checker 0.4: экземпляры ФБ используются вызовом (`fbDisc(...)`, `afbBypass[k](...)`) и чтением выходов, структуры — обращением к полям; это он не считает использованием |
 | UnusedVariable | `FB_SisEventLog` (`astRing`, `uiNext`, `uiUsed`, `udiSeq`) | то же | Переменные журнала используются только в методах и свойствах, которые понижение выносит в отдельные функции; тело ФБ пустое |
 | UnusedVariable | `F_SisCrc16Byte` (`bData`), `F_VoteEval` (`eArch`) | то же | Ложное срабатывание: `bData` — аргумент вложенного вызова `SHL(BYTE_TO_WORD(bData), …)`; `eArch` передаётся как `F_VoteArchChannels(eArch := eArch)` — присваивание формальному параметру с тем же именем iec_checker принимает за сам параметр |
 
@@ -94,7 +100,8 @@ E049 (тесты читают переменные стендов и журна�
 
 Без объявлений `PL` в репозитории исключены файлы, которые объявляют `PL.*` или зависят от исключённых
 (раздел «Сгенерированный код» в `tools/check/rusty_exclude.txt`): `GVL_Sis`, `FB_SisApp`, `PRG_Sis`,
-`FB_SisHarness`, `FB_VoteTruth_Test`, `FB_CemGen01_Test`, `FB_CemGen02_Test`, `GVL_TestsGenerated`.
+`FB_SisHarness`, `FB_VoteTruth_Test`, `FB_CemGen01_Test` … `FB_CemGen03_Test`, `GVL_TestsGenerated`
+(новый набор сценариев по матрице добавляется в `rusty_exclude.txt` вместе с ним).
 Остальное (`ST_SisIo`, `GVL_SisCfg`, `GVL_SisIo`, `F_SisIoNormal`, `F_SisIoKeys`, `GVL_VoteTruthTable`) RuSTy
 проверяет — 0 ошибок. Отдельно, с локальной прокладкой `PL` (объявления `I_TimeSource`, `FB_SystemTime`,
 `FB_FakeTime`, `FB_Delay`, `F_IsFinite`, констант NE 43) и `--strip-namespace PL`, весь сгенерированный код и

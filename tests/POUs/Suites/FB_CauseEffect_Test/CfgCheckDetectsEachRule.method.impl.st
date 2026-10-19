@@ -23,6 +23,20 @@ stCfg.astCause[2].tOverrideMax := T#2H1S;
 AssertEquals_WORD(Expected := GVL_Const.CEM_CFG_CAUSE, Actual := F_CemCheckCfg(stCfg := stCfg),
     Message := 'override > 2 h');
 stCfg := CfgBase();
+stCfg.astCause[2].tOverrideClear := T#0S;
+AssertEquals_WORD(Expected := GVL_Const.CEM_CFG_CAUSE, Actual := F_CemCheckCfg(stCfg := stCfg),
+    Message := 'override clear 0 s');
+stCfg.astCause[2].tOverrideClear := T#15M;
+AssertEquals_WORD(Expected := GVL_Const.CEM_CFG_CAUSE, Actual := F_CemCheckCfg(stCfg := stCfg),
+    Message := 'override clear = override time');
+stCfg.astCause[2].tOverrideClear := T#14M59S999MS;
+AssertEquals_WORD(Expected := 0, Actual := F_CemCheckCfg(stCfg := stCfg),
+    Message := 'override clear just below override time valid');
+stCfg := CfgBase();
+stCfg.astCause[1].tOverrideClear := T#1H;
+AssertEquals_WORD(Expected := 0, Actual := F_CemCheckCfg(stCfg := stCfg),
+    Message := 'override clear not checked when override not allowed');
+stCfg := CfgBase();
 uBad.iValue := 3;
 stCfg.astCause[4].eSource := uBad.eSource;
 AssertEquals_WORD(Expected := GVL_Const.CEM_CFG_CAUSE, Actual := F_CemCheckCfg(stCfg := stCfg),

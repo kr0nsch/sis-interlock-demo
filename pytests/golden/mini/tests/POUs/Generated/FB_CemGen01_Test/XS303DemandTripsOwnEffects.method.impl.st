@@ -2,15 +2,15 @@
 //   python -m cemgen generate <файл матрицы .csv или .xlsx>
 // Матрица: TEST-U301-CEM, объект U-301, ревизия 1 от 2026-10-16, SHA-256 сетки 9067fda96ae55e67
 coUnit.TEST('Matrix_XS303Demand_TripsOwnEffects');
-xArmed := fbH012.Arm();
+xArmed := fbH015.Arm();
 AssertTrue(Condition := xArmed, Message := 'armed: all effects energized after reset');
-fbH012.stIo.xXS303 := TRUE;
-fbH012.Cycle();   // t0
-fbH012.Run(tDuration := T#500MS, tStep := T#500MS);   // t0 + 500 мс
-AssertTrue(Condition := fbH012.stIo.xQXV301, Message := 'XS303: XV301 must stay energized');
-AssertFalse(Condition := fbH012.stIo.xQM302, Message := 'XS303: M302 must be tripped');
-AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_XS303, Actual := fbH012.fbApp.stCemSts.uiFirstOut,
+fbH015.stIo.xXS303 := TRUE;
+fbH015.Cycle();   // t0
+fbH015.Run(tDuration := T#500MS, tStep := T#500MS);   // t0 + 500 мс
+AssertTrue(Condition := fbH015.stIo.xQXV301, Message := 'XS303: XV301 must stay energized');
+AssertFalse(Condition := fbH015.stIo.xQM302, Message := 'XS303: M302 must be tripped');
+AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_XS303, Actual := fbH015.fbApp.stCemSts.uiFirstOut,
     Message := 'XS303: first-out');
-AssertEquals_WORD(Expected := 16#0004, Actual := fbH012.fbApp.stCemSts.wCauseLatched,
+AssertEquals_WORD(Expected := 16#0004, Actual := fbH015.fbApp.stCemSts.wCauseLatched,
     Message := 'XS303: latched causes after delay');
 coUnit.TEST_FINISHED();

@@ -103,7 +103,11 @@ def _cause_items(cause: Cause) -> list[str]:
         f"tDelay := {st_time(cause.delay_ms)}",
     ]
     if cause.override:
-        items += ["xOverrideAllowed := TRUE", f"tOverrideMax := {st_time(cause.override_time_ms)}"]
+        items += [
+            "xOverrideAllowed := TRUE",
+            f"tOverrideMax := {st_time(cause.override_time_ms)}",
+            f"tOverrideClear := {st_time(cause.override_clear_ms)}",
+        ]
     return items
 
 

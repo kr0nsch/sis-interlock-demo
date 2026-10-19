@@ -8,10 +8,10 @@
 
 Логика противоаварийной защиты (ПАЗ) на ST для CODESYS V3.5: голосование MooN с деградацией при
 отказе каналов, исполнитель матрицы причин и следствий с задержками, первопричиной, пусковыми
-обходами и ручным сбросом. Конфигурация ПЛК, тесты по матрице, таблица матрицы для документации,
-протокол испытаний в стиле FAT и раздел функций безопасности SRS генерируются из одного файла —
-матрицы причин и следствий вымышленного сепаратора V-101. Всё собрано в CODESYS 3.5.17.30, 238
-тестов coUnit пройдены в CODESYS Control Win V3.
+обходами (срок и автоматическое снятие после подтверждения нормы) и ручным сбросом. Конфигурация
+ПЛК, тесты по матрице, таблица матрицы для документации, протокол испытаний в стиле FAT и раздел
+функций безопасности SRS генерируются из одного файла — матрицы причин и следствий вымышленного
+сепаратора V-101. Всё собрано в CODESYS 3.5.17.30, 255 тестов coUnit пройдены в CODESYS Control Win V3.
 
 ## Демонстрация
 
@@ -20,7 +20,7 @@
 > 1. `docs/media/cause-effect-matrix.png` — матрица причин и следствий V-101
 >    ([cause_effect_matrix.html](docs/cause_effect_matrix.html), печать на A3): 10 причин, 7 следствий, маски, CRC.
 > 2. `docs/media/cds-test.gif` — терминал: `python -m cemgen generate examples/separator/cem.csv` и
->    `python tools/codesys/cds.py test` (18 наборов, 238 тестов в Control Win).
+>    `python tools/codesys/cds.py test` (19 наборов, 255 тестов в Control Win).
 
 Пока картинок нет — текстом. Строка матрицы ([examples/separator/cem.csv](examples/separator/cem.csv)):
 причина 1 — давление выше 0,90 МПа по двум из трёх датчиков в течение 2 с закрывает ESDV101,
@@ -48,9 +48,9 @@ AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_PSHH101, Actual := fbH001.fbApp.s
 Прогон в CODESYS (вывод `cds.py test`, 19.10.2026):
 
 ```text
-[cds] import: OK (создано 0, обновлено 0, удалено 0, перемещено 0, без изменений 84, 29.0 с)
-[cds] build: OK (ошибок 0, предупреждений 0, 1.7 с)
-[cds] test: OK (наборов 18, тестов 238, пройдено 238, упало 0, пропущено 0, 60.5 с)
+[cds] import: OK (создано 0, обновлено 0, удалено 0, перемещено 0, без изменений 85, 27.9 с)
+[cds] build: OK (ошибок 0, предупреждений 0, 1.9 с)
+[cds] test: OK (наборов 19, тестов 255, пройдено 255, упало 0, пропущено 0, 65.6 с)
 ```
 
 ## Архитектура
@@ -62,7 +62,7 @@ flowchart LR
     sensors["Датчики<br/>PT101A/B/C, LT102A/B/C, TT103A/B,<br/>AT104A/B/C — 4–20 мА, NE 43;<br/>BS105, HS106, PS108, ES109 — DI<br/>с контролем линии"]
     voting["FB_Voting × 10<br/>1oo1, 1oo2, 2oo2, 2oo3;<br/>деградация при отказе,<br/>байпас канала с таймером,<br/>рассогласование"]
     causes["Причины 1…10<br/>PSHH101 … ESL109<br/>требование после голосования"]
-    cem["FB_CauseEffect<br/>задержки, фиксация,<br/>первопричина с меткой времени,<br/>пусковые обходы,<br/>сброс только при снятых причинах"]
+    cem["FB_CauseEffect<br/>задержки, фиксация,<br/>первопричина с меткой времени,<br/>пусковые обходы: срок<br/>и автоснятие при норме,<br/>сброс только при снятых причинах"]
     effects["Следствия<br/>ESDV101, BDV101, ESDV102,<br/>P101A/B, H101, UA110 —<br/>обесточивание на срабатывание"]
     sensors --> voting --> causes --> cem --> effects
     cfg["GVL_SisCfg (CONSTANT)<br/>маски, уставки, CRC"] -.-> voting
@@ -77,10 +77,10 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    csv["examples/separator/cem.csv<br/>(или .xlsx)"] --> val["cemgen validate<br/>CEM-E001…E030, W001…W006"]
+    csv["examples/separator/cem.csv<br/>(или .xlsx)"] --> val["cemgen validate<br/>CEM-E001…E031, W001…W006"]
     val --> gen["cemgen generate"]
     gen --> st["src/**/Generated/<br/>ST_SisIo, GVL_SisCfg, FB_SisApp, PRG_Sis"]
-    gen --> tests["tests/**/Generated/<br/>71 сценарий по матрице,<br/>36 таблиц истинности"]
+    gen --> tests["tests/**/Generated/<br/>83 сценария по матрице,<br/>36 таблиц истинности"]
     gen --> docs["docs/cause_effect_matrix.md, .html,<br/>FAT_protocol.md, раздел 3 SRS.md"]
     st --> cds["CODESYS 3.5.17.30<br/>cds.py build, test"]
     tests --> cds
@@ -173,8 +173,8 @@ python tools\codesys\cds.py report             &:: итоги → docs/TEST_REPO
 python -m cemgen fat-report examples/separator/cem.csv --results build/test-results.json
 ```
 
-Итог 19.10.2026: `build` и `build --tests` — 0 ошибок, 0 предупреждений; `check --tests` — 80
-объектов без ошибок; `test` — 238 из 238; `roundtrip` — 711 файлов побайтно, повторный импорт без
+Итог 19.10.2026: `build` и `build --tests` — 0 ошибок, 0 предупреждений; `check --tests` — 81
+объект без ошибок; `test` — 255 из 255; `roundtrip` — 747 файлов побайтно, повторный импорт без
 изменений; протокол FAT — 55 шагов из 55 «соответствует». Установка CODESYS, coUnit и рантайма, работа
 в IDE — [docs/MANUAL_STEPS.md](docs/MANUAL_STEPS.md).
 
@@ -182,12 +182,12 @@ python -m cemgen fat-report examples/separator/cem.csv --results build/test-resu
 
 | Что | Сколько | Как |
 |---|---:|---|
-| Граничные случаи ФБ, написанные вручную: уставки и гистерезис, NaN, задержки «до и ровно», байпасы, обходы, сброс, первопричина, события, ошибки конфигурации, «время назад» (неисправность источника времени) | 95 тестов, 7 наборов | coUnit, `tests/POUs/Suites/` |
+| Граничные случаи ФБ, написанные вручную: уставки и гистерезис, NaN, задержки «до и ровно», байпасы, обходы (срок, автоснятие ровно по подтверждению нормы, дребезг требования), сброс, первопричина, события, ошибки конфигурации, «время назад» (неисправность источника времени) | 100 тестов, 7 наборов | coUnit, `tests/POUs/Suites/` |
 | Таблицы истинности `F_VoteEval` и `FB_Voting`: все сочетания «требование × достоверность × байпас» по каждому каналу, для 4 схем, 3 политик, DI и AI — 4188 строк | 36 тестов | coUnit, эталонная модель `cemgen` |
 | Те же таблицы по второй, независимой модели (`tools_project/vote_model.py`) | 36 тестов, 8 наборов | coUnit |
-| Сценарии по матрице: каждая причина отключает ровно свои следствия; задержки; обходы; сброс; отказ канала; байпас; первопричина; старт ПЛК | 71 тест | coUnit, генерируются `cemgen` |
-| Генератор: каждое правило проверки (срабатывание и тишина), эталонная модель против таблиц 5.3 и диаграммы 6.11 контракта, детерминизм, CSV = XLSX, эталонные файлы, SRS | 196 | pytest `pytests/` |
-| Соглашения: дисклеймер в каждом объекте ST, имена тестов, регистрация наборов; генератор второй модели | 119 | pytest `tools/project_checks/`, `tools_project/` |
+| Сценарии по матрице: каждая причина отключает ровно свои следствия; задержки; обходы — срок, автоснятие при норме, перезапуск подтверждения, срок как верхняя граница; сброс; отказ канала; байпас; первопричина; старт ПЛК | 83 теста | coUnit, генерируются `cemgen` |
+| Генератор: каждое правило проверки (срабатывание и тишина), эталонная модель против таблиц 5.3 и диаграммы 6.11 контракта, детерминизм, CSV = XLSX, эталонные файлы, SRS | 210 | pytest `pytests/` |
+| Соглашения: дисклеймер в каждом объекте ST, имена тестов, регистрация наборов; генератор второй модели | 120 | pytest `tools/project_checks/`, `tools_project/` |
 | Инструменты шаблона: раскладка, сборка, линтер, iec_checker, RuSTy, `cds.py` | 528 | pytest `tools/tests/` |
 | Статанализ и линтер | 0 необоснованных находок | `st_lint --strict`, iec_checker 0.4 — [docs/STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md) |
 
@@ -195,7 +195,8 @@ python -m cemgen fat-report examples/separator/cem.csv --results build/test-resu
 `FB_CauseEffect` по одной в копии репозитория — байпас как «принудительная норма», байпас без ключа,
 превышение предела байпасов, продление байпаса без действия оператора, сброс во время задержки,
 потеря первопричины, обход без ключа и без срока, выходы под напряжением после старта или ошибки
-конфигурации и другие; тесты поймали 16 из 16 (docs/ASSUMPTIONS.md, R-08; раньше — A-12).
+конфигурации и другие; тесты поймали 16 из 16 (docs/ASSUMPTIONS.md, R-08; раньше — A-12). Мутации
+автоснятия пускового обхода — 6 из 6 (там же, R-12).
 
 CI (GitHub Actions) — всё, что не требует CODESYS: ruff, mypy, pytest, `cemgen validate` и
 `generate --check`, `gen_voting_tests.py --check`, сборка ST, линтер, iec_checker; необязательно —
@@ -230,8 +231,10 @@ RuSTy и iec_checker nightly. Сборка и тесты в CODESYS — на Win
 - CRC в ПЛК охватывает только число причин и следствий и маски матрицы: ручную правку задержек,
   обходов, уставок и схем голосования в `GVL_SisCfg` ловит только `cemgen generate --check` в CI
   (DESIGN.md, 6.8). Остановившийся источник времени программа не обнаруживает (DESIGN.md, 3.3).
-- Пусковой обход снимается по сроку, а не тогда, когда процесс вышел в норму: до конца срока
-  функция подавлена (DESIGN.md, 6.4; автоматическое снятие — после сверки требований, S-06).
+- Пусковой обход снимается сам, когда требования причины нет непрерывно время подтверждения нормы
+  (`override_clear`), срок остаётся верхней границей (DESIGN.md, 6.4, D-20). Время подтверждения в
+  демо (30 с, 1 мин) выбрано по вымышленной динамике процесса; в реальном проекте — по анализу
+  опасностей и требованиям к обходам (сверить, S-06).
 - Требования стандартов пересказаны и помечены «сверить»: состав SRS, обозначения приборов, пороги
   NE 43, уставки загазованности, практика деградации 2oo3 (DESIGN.md, 15.2).
 - Дальше: оповещение оператора отдельной программой поверх статусов ПАЗ (без влияния на логику),
@@ -244,11 +247,13 @@ CODESYS V3.5 — explicitly **not** a SIL-rated system. `FB_Voting` implements M
 2oo2, 2oo3) for discrete and 4–20 mA channels with configurable degradation on channel failure,
 analog discrepancy alarms and time-limited channel bypasses; `FB_CauseEffect` executes a
 cause-and-effect matrix with trip delays, de-energise-to-trip outputs, first-out capture, startup
-overrides and manual reset only after causes clear. The Python tool `cemgen` turns one CSV/XLSX
+overrides that clear automatically once the cause has stayed healthy for a confirmation time (the
+override timer remains the upper bound) and manual reset only after causes clear. The Python tool `cemgen` turns one CSV/XLSX
 matrix (a fictional three-phase separator, 10 causes, 7 effects) into the PLC configuration, coUnit
 tests whose expectations come from an independent Python reference model, exhaustive voting truth
-tables, the matrix document, a FAT-style test protocol and the SIF section of a demo SRS. 238 tests
-pass in CODESYS 3.5.17.30 / Control Win V3 and catch all 16 injected logic faults. Docs are in Russian.
+tables, the matrix document, a FAT-style test protocol and the SIF section of a demo SRS. 255 tests
+pass in CODESYS 3.5.17.30 / Control Win V3; mutation runs show they catch injected logic faults.
+Docs are in Russian.
 
 ## Лицензия
 

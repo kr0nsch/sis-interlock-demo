@@ -1,4 +1,4 @@
-"""Эталонная модель (DESIGN.md, 10.6): таблицы 5.3, диаграмма 6.11, CRC 6.8, примеры 12.4."""
+"""Эталонная модель (DESIGN.md, 10.6): таблицы 5.3, диаграмма 6.11, CRC 6.8, примеры 12.4, обходы 6.4."""
 
 from __future__ import annotations
 
@@ -314,7 +314,9 @@ def test_voting_discrepancy_after_delay_strict() -> None:
 def test_timing_diagram_6_11() -> None:
     cfg = CemCfg(cause_count=2, effect_count=1, start_tripped=False)
     cfg.causes[0] = CauseCfg(enable=True, delay_ms=2000)
-    cfg.causes[1] = CauseCfg(enable=True, delay_ms=5000, override_allowed=True, override_max_ms=15 * 60_000)
+    cfg.causes[1] = CauseCfg(
+        enable=True, delay_ms=5000, override_allowed=True, override_max_ms=15 * 60_000, override_clear_ms=30_000
+    )
     cfg.effects[0] = EffectCfg(1, 0x0003)
     cfg.crc = cem_crc(cfg)
     fb = CauseEffect()
@@ -376,6 +378,34 @@ def test_timing_diagram_6_11() -> None:
         (EventKind.EFFECT_TRIP, 1),
     ]
     assert log.history[-1].cause == 2  # EffectTrip несёт младшую зафиксированную причину из маски
+    # t1 + 15 мин 1 с: требование 2 ушло и сброс в одном вызове
+    t.advance(1000)
+    demand[1] = False
+    cmd.reset = True
+    assert call() == [(EventKind.CAUSE_CLEAR, 2), (EventKind.RESET_DONE, 0), (EventKind.EFFECT_RESTORE, 1)]
+    # t2: обход причины 2 и её требование; подтверждения нормы нет, пока требование есть
+    t.advance(1000)
+    cmd.override_req = 0x0002
+    demand[1] = True
+    assert call() == [(EventKind.CAUSE_DEMAND, 2), (EventKind.OVERRIDE_ON, 2)]
+    assert fb.sts.override_clear_remain_ms[1] == 0
+    run(10_000 - 100)
+    t.advance(100)
+    demand[1] = False  # t2 + 10 с: требование ушло — подтверждение нормы 30 с
+    assert call() == [(EventKind.CAUSE_CLEAR, 2)]
+    assert fb.sts.overridden == 0x0002 and fb.sts.override_clear_remain_ms[1] == 30_000
+    run(29_900)
+    assert fb.sts.overridden == 0x0002 and fb.sts.override_clear_remain_ms[1] == 100
+    assert run(100) == [(EventKind.OVERRIDE_CLEARED, 2)]  # t2 + 40 с
+    assert fb.sts.overridden == 0 and fb.sts.latched == 0 and _energized(fb)
+    run(10_000 - 100)
+    t.advance(100)
+    demand[1] = True  # t2 + 50 с: задержка отсчитывается заново
+    assert call() == [(EventKind.CAUSE_DEMAND, 2)]
+    assert fb.sts.delay_remain_ms[1] == 5000
+    run(4900)
+    assert fb.sts.latched == 0
+    assert run(100) == [(EventKind.FIRST_OUT, 2), (EventKind.CAUSE_TRIP, 2), (EventKind.EFFECT_TRIP, 1)]
 
 
 def test_cem_start_tripped_and_cfg_error() -> None:
@@ -456,9 +486,16 @@ def _cem_base() -> CemCfg:
     """Матрица ручных тестов ST (``FB_CauseEffect_Test.CfgBase``)."""
     cfg = CemCfg(cause_count=4, effect_count=3, start_tripped=False)
     cfg.causes[0] = CauseCfg(enable=True, delay_ms=2000)
-    cfg.causes[1] = CauseCfg(enable=True, delay_ms=5000, override_allowed=True, override_max_ms=15 * 60_000)
+    cfg.causes[1] = CauseCfg(
+        enable=True, delay_ms=5000, override_allowed=True, override_max_ms=15 * 60_000, override_clear_ms=30_000
+    )
     cfg.causes[2] = CauseCfg(
-        enable=True, source=CauseSource.EXTERNAL, delay_ms=0, override_allowed=True, override_max_ms=10_000
+        enable=True,
+        source=CauseSource.EXTERNAL,
+        delay_ms=0,
+        override_allowed=True,
+        override_max_ms=10_000,
+        override_clear_ms=2000,
     )
     cfg.effects[0] = EffectCfg(1, 0x0003)
     cfg.effects[1] = EffectCfg(4, 0x0004)
@@ -533,6 +570,7 @@ def test_cem_override_rerequest_after_expiry_gets_full_time() -> None:
     r = _Cem()
     r.cycle()
     r.cmd.override_req = 0x0004
+    r.demand[2] = True  # требование держится: обход не снимается при норме (6.4), проверяется срок
     r.step(100)
     r.run(10_000, 1000)
     assert r.sts().overridden == 0
@@ -550,6 +588,7 @@ def test_cem_override_cancel_and_request_in_one_call_restarts() -> None:
     r = _Cem()
     r.cycle()
     r.cmd.override_req = 0x0004
+    r.demand[2] = True  # требование держится: обход не снимается при норме (6.4), проверяется срок
     r.step(100)
     r.run(6000, 1000)
     assert r.sts().override_remain_ms[2] == 4000
@@ -562,3 +601,144 @@ def test_cem_override_cancel_and_request_in_one_call_restarts() -> None:
     assert r.sts().overridden == 0x0004
     r.step(100)
     assert r.sts().overridden == 0
+
+
+# --- автоснятие пускового обхода при норме (6.4, п. 5; D-20; R-12) ------------------------------------------
+def _causes_of(r: _Cem, kind: EventKind) -> list[int]:
+    return [e.cause for e in r.log.history if e.kind == kind]
+
+
+def test_cem_override_clears_exactly_at_confirm_then_full_delay() -> None:
+    r = _Cem()
+    r.cycle()
+    r.cmd.override_req = 0x0002
+    r.demand[1] = True
+    r.step(100)  # t1: обход причины 2 и требование
+    assert r.sts().override_clear_remain_ms[1] == 0
+    r.run(10_000, 1000)
+    assert r.sts().active == 0x0002 and r.sts().latched == 0
+    r.demand[1] = False
+    r.step(100)  # t2: требование ушло
+    assert _last(r.log) == EventKind.CAUSE_CLEAR and r.sts().override_clear_remain_ms[1] == 30_000
+    r.run(29_900, 100)
+    assert r.sts().overridden == 0x0002 and r.sts().override_clear_remain_ms[1] == 100
+    assert _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    r.step(100)  # t2 + 30 с
+    assert _last(r.log) == EventKind.OVERRIDE_CLEARED and r.log.history[-1].cause == 2
+    assert r.sts().overridden == 0 and r.sts().override_remain_ms[1] == 0
+    assert r.sts().override_clear_remain_ms[1] == 0 and r.sts().latched == 0 and r.fb.effect_out[0]
+    r.demand[1] = True
+    r.step(100)  # t3: новое требование — полная задержка от появления
+    r.run(4900, 100)
+    assert r.sts().latched == 0
+    r.step(100)
+    assert r.sts().latched == 0x0002 and not r.fb.effect_out[0]
+
+
+def test_cem_override_chattering_demand_not_cleared_expiry_bounds() -> None:
+    r = _Cem()
+    r.cycle()
+    r.cmd.override_req = 0x0004
+    r.demand[2] = True
+    r.step(100)  # t1: обход причины 3 (10 с, подтверждение 2 с) и требование
+    for _ in range(4):  # норма короче подтверждения, затем требование на один шаг
+        r.demand[2] = False
+        r.run(2000, 100)
+        assert r.sts().override_clear_remain_ms[2] == 100
+        r.demand[2] = True
+        r.step(100)
+        assert r.sts().override_clear_remain_ms[2] == 0
+    assert r.sts().overridden == 0x0004 and _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    r.demand[2] = False
+    r.run(1500, 100)  # t1 + 9,9 с
+    assert r.sts().overridden == 0x0004 and r.sts().override_remain_ms[2] == 100
+    r.demand[2] = True
+    r.step(100)  # t1 + 10 с: срок — верхняя граница
+    assert _causes_of(r, EventKind.OVERRIDE_EXPIRED) == [3] and _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    assert r.sts().overridden == 0 and r.sts().latched == 0x0004 and not r.fb.effect_out[1]
+
+
+def test_cem_override_new_acceptance_restarts_confirm_repeat_does_not() -> None:
+    r = _Cem()
+    r.cycle()
+    r.cmd.override_req = 0x0004
+    r.step(100)  # t1: обход без требования — подтверждение от вызова, где принят
+    assert r.sts().overridden == 0x0004 and r.sts().override_clear_remain_ms[2] == 2000
+    r.run(1500, 100)
+    assert r.sts().override_clear_remain_ms[2] == 500
+    r.cmd.override_req = 0x0004
+    r.step(100)  # повторный запрос действующего обхода — без перезапуска
+    assert r.sts().override_clear_remain_ms[2] == 400
+    r.cmd.override_cancel = 0x0004
+    r.cmd.override_req = 0x0004
+    r.step(100)  # t2: снятие и запрос в одном вызове
+    assert [e.kind for e in r.log.history[-2:]] == [EventKind.OVERRIDE_OFF, EventKind.OVERRIDE_ON]
+    assert r.sts().override_clear_remain_ms[2] == 2000
+    r.run(1900, 100)
+    assert r.sts().overridden == 0x0004
+    r.step(100)  # t2 + 2 с
+    assert _last(r.log) == EventKind.OVERRIDE_CLEARED and r.sts().overridden == 0
+    r.cmd.override_req = 0x0004
+    r.step(100)  # запрос сразу после автоснятия — снова полное подтверждение
+    assert _last(r.log) == EventKind.OVERRIDE_ON
+    assert r.sts().overridden == 0x0004 and r.sts().override_clear_remain_ms[2] == 2000
+
+
+def test_cem_time_backwards_during_confirm_ends_override_as_expired() -> None:
+    r = _Cem()
+    r.cycle()
+    r.cmd.override_req = 0x0002
+    r.demand[1] = True
+    r.step(100)
+    r.run(10_000, 1000)
+    r.demand[1] = False
+    r.step(100)  # t2
+    t2 = r.t.now()
+    r.run(20_000, 1000)
+    assert r.sts().override_clear_remain_ms[1] == 10_000
+    r.t.now_ns = t2 - 1000 * NS_PER_MS  # время назад
+    r.cycle()
+    assert _causes_of(r, EventKind.TIME_FAULT) == [0]
+    assert _causes_of(r, EventKind.OVERRIDE_EXPIRED) == [2] and _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    assert r.sts().overridden == 0 and r.sts().override_clear_remain_ms[1] == 0
+    assert r.sts().latched == 0 and r.fb.effect_out[0]
+    r.run(40_000, 1000)
+    assert _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    r.demand[1] = True
+    r.step(100)
+    r.run(4900, 100)
+    assert r.sts().latched == 0
+    r.step(100)
+    assert r.sts().latched == 0x0002
+
+
+def test_cem_override_expiry_and_confirm_in_one_call_reports_expired() -> None:
+    """Срок и подтверждение заканчиваются в одном вызове — обход снят по сроку (6.4: п. 4 раньше п. 5)."""
+    r = _Cem()
+    r.cycle()
+    r.cmd.override_req = 0x0004
+    r.demand[2] = True
+    r.step(100)  # t1: обход 10 с, подтверждение 2 с
+    r.run(7900, 100)  # t1 + 7,9 с: требование ещё есть
+    r.demand[2] = False
+    r.step(100)  # t1 + 8 с: подтверждение закончится ровно на t1 + 10 с — вместе со сроком
+    r.run(1900, 100)
+    assert r.sts().overridden == 0x0004 and r.sts().override_clear_remain_ms[2] == 100
+    assert r.sts().override_remain_ms[2] == 100
+    r.step(100)  # t1 + 10 с
+    assert _causes_of(r, EventKind.OVERRIDE_EXPIRED) == [3] and _causes_of(r, EventKind.OVERRIDE_CLEARED) == []
+    assert r.sts().overridden == 0 and r.sts().latched == 0
+
+
+def test_cem_check_cfg_override_clear_rules() -> None:
+    assert cem_check_cfg(_cem_base()) == 0
+    for value in (0, 15 * 60_000):  # 0 и не меньше срока — ошибка
+        cfg = _cem_base()
+        cfg.causes[1].override_clear_ms = value
+        assert cem_check_cfg(cfg) == limits.CEM_CFG_CAUSE, value
+    cfg = _cem_base()
+    cfg.causes[1].override_clear_ms = 15 * 60_000 - 1
+    assert cem_check_cfg(cfg) == 0
+    cfg = _cem_base()
+    cfg.causes[0].override_clear_ms = 3_600_000  # обход не разрешён — поле не проверяется
+    assert cem_check_cfg(cfg) == 0

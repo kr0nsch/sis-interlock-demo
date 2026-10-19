@@ -11,4 +11,5 @@ AssertEquals_INT(Expected := 4, Actual := TO_INT(E_SisEventKind.FirstOut), Messa
 AssertEquals_INT(Expected := 13, Actual := TO_INT(E_SisEventKind.BypassOn), Message := 'BypassOn = 13');
 AssertEquals_INT(Expected := 23, Actual := TO_INT(E_SisEventKind.StartTrip), Message := 'StartTrip = 23');
 AssertEquals_INT(Expected := 24, Actual := TO_INT(E_SisEventKind.TimeFault), Message := 'TimeFault = 24');
+AssertEquals_INT(Expected := 25, Actual := TO_INT(E_SisEventKind.OverrideCleared), Message := 'OverrideCleared = 25');
 coUnit.TEST_FINISHED();

@@ -7,13 +7,15 @@ IF stCfg.uiCauseCount < 1 OR stCfg.uiCauseCount > GVL_Const.SIS_CAUSES_MAX
 THEN
     wErr := wErr OR GVL_Const.CEM_CFG_COUNT;
 ELSE
-    // Причины: источник, предел задержки, длительность разрешённого обхода
+    // Причины: источник, предел задержки, срок разрешённого обхода и подтверждение нормы для его
+    // автоснятия — короче срока, иначе обход не снимется при норме раньше срока (6.4)
     FOR uiI := 1 TO stCfg.uiCauseCount DO
         stCause := stCfg.astCause[uiI];
         xSourceOk := stCause.eSource = E_CauseSource.Voting OR stCause.eSource = E_CauseSource.External;
         xOvrTimeOk := stCause.tOverrideMax > T#0S AND stCause.tOverrideMax <= GVL_Const.SIS_OVERRIDE_MAX;
+        xOvrClrOk := stCause.tOverrideClear > T#0S AND stCause.tOverrideClear < stCause.tOverrideMax;
         IF NOT xSourceOk OR stCause.tDelay > GVL_Const.SIS_DELAY_MAX
-            OR (stCause.xOverrideAllowed AND NOT xOvrTimeOk)
+            OR (stCause.xOverrideAllowed AND NOT (xOvrTimeOk AND xOvrClrOk))
         THEN
             xCauseBad := TRUE;
         END_IF

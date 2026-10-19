@@ -67,7 +67,7 @@ def test_plugin_with_real_iolistgen(tmp_path: Path) -> None:
 
     model = _Model(signals=(_Signal("PT-101A", "PT101A"),))
     written = generator.generate(model, tmp_path, ctx)
-    assert len(written) == 250
+    assert len(written) == 276
     assert (tmp_path / "src/GVLs/Generated/GVL_SisCfg.gvl.st").is_file()
     assert any("тегов матрицы нет в перечне" in w for w in ctx.warnings)
     strict = gens.resolve_options(generator, {"cem": str(DEMO_CSV), "strict_tags": True})

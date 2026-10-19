@@ -45,4 +45,5 @@ FB_SisHarness.st  # объявляет PL.FB_FakeTime
 FB_VoteTruth_Test.st  # тесты уровня 2 объявляют PL.FB_FakeTime
 FB_CemGen01_Test.st  # экземпляры FB_SisHarness (исключён)
 FB_CemGen02_Test.st  # экземпляры FB_SisHarness (исключён)
+FB_CemGen03_Test.st  # экземпляры FB_SisHarness (исключён)
 GVL_TestsGenerated.st  # экземпляры FB_VoteTruth_Test и FB_CemGenNN_Test (исключены)
