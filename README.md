@@ -1,6 +1,18 @@
-# sis-interlock-demo
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/banner-light.svg">
+    <img alt="Баннер sis-interlock-demo: датчики давления PT101A/B/C, голосование 2oo3 с деградацией до 1oo2 при отказе канала, отсечной клапан ESDV101 и фрагмент матрицы причин и следствий" src="docs/media/banner-light.svg" width="100%">
+  </picture>
+</p>
 
-[![CI](https://github.com/<GITHUB_USER>/sis-interlock-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/<GITHUB_USER>/sis-interlock-demo/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://github.com/<GITHUB_USER>/sis-interlock-demo/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/<GITHUB_USER>/sis-interlock-demo/ci.yml?branch=main&style=flat-square&label=CI&labelColor=1B2736"></a> <a href="LICENSE"><img alt="Лицензия MIT" src="https://img.shields.io/badge/license-MIT-56677D?style=flat-square&labelColor=1B2736"></a>
+  <img alt="CODESYS 3.5.17.30" src="https://img.shields.io/badge/CODESYS-3.5.17.30-C2410C?style=flat-square&labelColor=1B2736"> <img alt="IEC 61131-3" src="https://img.shields.io/badge/IEC%2061131--3-56677D?style=flat-square"> <img alt="Язык: Structured Text" src="https://img.shields.io/badge/Structured%20Text-3A4B60?style=flat-square"> <img alt="Язык: Python" src="https://img.shields.io/badge/Python-3A4B60?style=flat-square&logo=python&logoColor=white">
+  <a href="#тесты-и-проверки"><img alt="Тесты локального прогона 19.10.2026: coUnit 255 из 255 в CODESYS Control Win, pytest 858" src="https://img.shields.io/badge/tests-coUnit%20255%2F255%20%C2%B7%20pytest%20858-3A4B60?style=flat-square&labelColor=1B2736"></a> <img alt="Демонстрация, не SIL-система" src="https://img.shields.io/badge/safety-demo%2C%20not%20SIL-56677D?style=flat-square&labelColor=1B2736">
+</p>
+
+<p align="center"><a href="#демонстрация">Демо</a> · <a href="#архитектура">Архитектура</a> · <a href="#быстрый-старт-без-железа">Быстрый старт</a> · <a href="docs/">Документация</a> · <a href="#summary-en">Summary (EN)</a></p>
 
 > **Внимание.** Код демонстрационный и не предназначен для систем безопасности. Реальная ПАЗ
 > требует определения SIL, сертифицированных аппаратных и программных средств и валидации по
@@ -15,16 +27,70 @@
 
 ## Демонстрация
 
-> **Плейсхолдеры — будет добавлено:**
->
-> 1. `docs/media/cause-effect-matrix.png` — матрица причин и следствий V-101
->    ([cause_effect_matrix.html](docs/cause_effect_matrix.html), печать на A3): 10 причин, 7 следствий, маски, CRC.
-> 2. `docs/media/cds-test.gif` — терминал: `python -m cemgen generate examples/separator/cem.csv` и
->    `python tools/codesys/cds.py test` (19 наборов, 255 тестов в Control Win).
+Всё ниже снято на этой машине с реальных прогонов 19.10.2026: CODESYS 3.5.17.30, CODESYS Control
+Win V3, coUnit 1.2.0.0. Картинки документов — снимки сгенерированных файлов из `docs/`.
 
-Пока картинок нет — текстом. Строка матрицы ([examples/separator/cem.csv](examples/separator/cem.csv)):
-причина 1 — давление выше 0,90 МПа по двум из трёх датчиков в течение 2 с закрывает ESDV101,
-отключает нагреватель H101 и включает сигнализацию UA110.
+**От матрицы до тестов в рантайме** — проверка матрицы, сверка сгенерированного кода с ней и
+прогон всех тестов coUnit в CODESYS Control Win:
+
+<p align="center">
+  <img alt="Терминал PowerShell: cemgen validate — ошибок 0, generate --check — 277 файлов совпадают с матрицей, cds.py test в CODESYS Control Win — 255 тестов из 255 пройдены" src="docs/media/demo-cemgen-codesys-test.gif" width="900">
+</p>
+<p align="center"><sub>Реальный прогон, Windows PowerShell, снято term2gif.py; ожидание CODESYS (108 с) сокращено, путь к каталогу укорочен</sub></p>
+
+**Срабатывание в рантайме** — 46 секунд работы ПАЗ в CODESYS Control Win, задача 20 мс. Логика —
+та же `PRG_Sis`, что в приложении; входы вместо модулей ввода задаёт демо-программа с простой моделью
+давления ([tools_project/demo](tools_project/demo/README.md)):
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/demo-trip-replay-dark.gif">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/demo-trip-replay-light.gif">
+    <img alt="Воспроизведение прогона в CODESYS Control Win: обрыв PT101C переводит 2oo3 в 1oo2, через 2 с PSHH101 закрывает ESDV101, первопричина PSHH101 сохраняется при вторичной PSLL101, сброс отклонён" src="docs/media/demo-trip-replay-light.gif" width="900">
+  </picture>
+</p>
+<p align="center"><sub>Трассировка реального прогона, отсчёт 100 мс (моменты выше — по отсчётам): <a href="docs/media/data/trip-trace.csv">trip-trace.csv</a> · статичный график: <a href="docs/media/chart-trip-first-out-dark.png">тёмный</a>, <a href="docs/media/chart-trip-first-out-light.png">светлый</a></sub></p>
+
+- **0–2 с** — старт ПЛК: все следствия в безопасном состоянии, первопричина «старт ПЛК»; сброс
+  кнопкой HS120 принят, потому что причин нет.
+- **6 с** — обрыв линии PT101C (2,0 мА, ниже порога NE 43): канал недостоверен, при политике VoteTrip
+  он голосует «на останов», и 2oo3 работает как 1oo2.
+- **17,5 → 19,6 с** — PT101A достиг 0,90 МПа, через 2 с задержки PSHH101 закрыла ESDV101, отключила
+  H101 и включила UA110. Первопричина — PSHH101.
+- **30,1 → 35,2 с** — после закрытия входного клапана давление упало до PSLL101: сработали ещё ESDV102 и
+  насосы P101A/B, а первопричина осталась PSHH101 — оператор видит исходное событие, а не следствие.
+- **40 с** — сброс отклонён: требование PSLL101 ещё есть.
+
+**Матрица причин и следствий** — тот же файл `cem.csv`, из которого генерируются конфигурация ПЛК и
+тесты, в виде листа для печати:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/shot-cause-effect-matrix-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/shot-cause-effect-matrix-light.png">
+    <img alt="Лист матрицы причин и следствий сепаратора V-101: 10 причин с каналами, схемами голосования, уставками, задержками и обходами, 7 следствий, 49 связей «X», CRC 16#CD40" src="docs/media/shot-cause-effect-matrix-light.png" width="100%">
+  </picture>
+</p>
+<p align="center"><sub>Снимок сгенерированного <a href="docs/cause_effect_matrix.html">docs/cause_effect_matrix.html</a> (cemgen 0.1.0, ревизия B, печать на A3)</sub></p>
+
+**Голосование при отказах** — как 2oo3 деградирует при каждой политике; эти таблицы целиком
+проверяются тестами на настоящих `F_VoteEval` и `FB_Voting`:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/shot-truth-table-2oo3-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/shot-truth-table-2oo3-light.png">
+    <img alt="Деградация 2oo3 по числу байпасированных и недостоверных каналов для политик VoteTrip, DegradeSafe и DegradeAvailable и 8 из 64 строк полной таблицы истинности F_VoteEval" src="docs/media/shot-truth-table-2oo3-light.png" width="900">
+  </picture>
+</p>
+<p align="center"><sub>Данные — <a href="docs/truth_tables/VOTING.md">docs/truth_tables/VOTING.md</a> (эталонная модель cemgen); 4188 строк проверяют 36 тестов coUnit в Control Win</sub></p>
+
+<details>
+<summary><b>Как строка матрицы превращается в тест</b></summary>
+
+Строка матрицы ([examples/separator/cem.csv](examples/separator/cem.csv)): причина 1 — давление
+выше 0,90 МПа по двум из трёх датчиков в течение 2 с закрывает ESDV101, отключает нагреватель H101 и
+включает сигнализацию UA110.
 
 ```text
 no;tag;description;signal;source;vote;policy;trip_on;setpoint;hyst;units;…;delay;bypass_max;bypass_time;override;…
@@ -45,13 +111,7 @@ AssertTrue(Condition := fbH001.stIo.xQBDV101, Message := 'PSHH101: BDV101 must s
 AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_PSHH101, Actual := fbH001.fbApp.stCemSts.uiFirstOut, …);
 ```
 
-Прогон в CODESYS (вывод `cds.py test`, 19.10.2026):
-
-```text
-[cds] import: OK (создано 0, обновлено 0, удалено 0, перемещено 0, без изменений 85, 27.9 с)
-[cds] build: OK (ошибок 0, предупреждений 0, 1.9 с)
-[cds] test: OK (наборов 19, тестов 255, пройдено 255, упало 0, пропущено 0, 65.6 с)
-```
+</details>
 
 ## Архитектура
 
@@ -171,6 +231,7 @@ python tools\codesys\cds.py test               &:: прогон coUnit в Contro
 python tools\codesys\cds.py roundtrip          &:: импорт → экспорт без диффа
 python tools\codesys\cds.py report             &:: итоги → docs/TEST_REPORT.md
 python -m cemgen fat-report examples/separator/cem.csv --results build/test-results.json
+python tools_project\demo\trip_trace.py        &:: демо-сценарий срабатывания в Control Win -> CSV
 ```
 
 Итог 19.10.2026: `build` и `build --tests` — 0 ошибок, 0 предупреждений; `check --tests` — 81
@@ -217,6 +278,8 @@ RuSTy и iec_checker nightly. Сборка и тесты в CODESYS — на Win
 | [TEST_REPORT.md](docs/TEST_REPORT.md), [STATIC_ANALYSIS.md](docs/STATIC_ANALYSIS.md) | отчёты о прогонах |
 | [MANUAL_STEPS.md](docs/MANUAL_STEPS.md) | установка, сборка, демо в IDE, изменение матрицы |
 | [LAYOUT.md](docs/LAYOUT.md), [CONTRIBUTING.md](CONTRIBUTING.md) | раскладка исходников ST и правила кода |
+| [tools_project/demo](tools_project/demo/README.md) | демо-сценарий срабатывания в Control Win: программа, сценарий, колонки трассировки |
+| [docs/media/](docs/media/) | баннеры, GIF и снимки этого README; [data/trip-trace.csv](docs/media/data/trip-trace.csv) — данные графика срабатывания |
 
 ## Ограничения и дальнейшие шаги
 
@@ -237,8 +300,10 @@ RuSTy и iec_checker nightly. Сборка и тесты в CODESYS — на Win
   опасностей и требованиям к обходам (сверить, S-06).
 - Требования стандартов пересказаны и помечены «сверить»: состав SRS, обозначения приборов, пороги
   NE 43, уставки загазованности, практика деградации 2oo3 (DESIGN.md, 15.2).
+- Демо-сценарий срабатывания (`tools_project/demo`) задаёт входы простой моделью давления: это
+  проверка поведения логики в рантайме, а не модель сепаратора.
 - Дальше: оповещение оператора отдельной программой поверх статусов ПАЗ (без влияния на логику),
-  HMI с матрицей и первопричиной, привязка к ПЛК210, медиа для этого README.
+  HMI с матрицей и первопричиной, привязка к ПЛК210.
 
 ## Summary (EN)
 
@@ -258,3 +323,12 @@ Docs are in Russian.
 ## Лицензия
 
 [MIT](LICENSE) © 2026 <ИМЯ ФАМИЛИЯ>
+
+---
+
+<p align="center"><b>Портфолио АСУ ТП</b></p>
+<table>
+<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/kns-pump-station">03 · kns-pump-station</a><br><sub>флагман: КНС, три насоса с ПЧ, модель, HMI</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/kns-port-domestic">04 · kns-port-domestic</a><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-iiot-stack">05 · plc-iiot-stack</a><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/<GITHUB_USER>/plc-ci-toolkit">07 · plc-ci-toolkit</a><br><sub>линтеры, сборка CODESYS, тесты, JUnit</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/s7-to-codesys">08 · s7-to-codesys</a><br><sub>конвертер SCL → ST с отчётом о переносе</sub></td><td width="33%"><a href="https://github.com/<GITHUB_USER>/sis-interlock-demo"><b>09 · sis-interlock-demo</b></a><br><sub>ПАЗ: MooN, матрица причин и следствий</sub></td></tr>
+</table>

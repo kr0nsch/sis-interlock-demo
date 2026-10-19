@@ -57,6 +57,12 @@
   прогону), `docs/CEMGEN.md`, архитектура, ручные шаги, допущения, отчёты тестов и статанализа.
 - CI: шаги «cemgen: pytest», проверка матрицы (CSV и XLSX), `cemgen generate --check`,
   `gen_voting_tests.py --check`.
+- Медиа README (`docs/media/`): баннеры для тёмной и светлой темы, social preview, GIF терминала
+  (проверка матрицы, `generate --check`, `cds.py test` — 255 из 255), воспроизведение срабатывания
+  в Control Win с первопричиной, снимки листа матрицы и таблиц голосования 2oo3.
+- Демо-сценарий срабатывания `tools_project/demo/`: программа `PRG_TripDemo` с моделью давления
+  вызывает неизменённую `PRG_Sis` в демо-проекте, `trip_trace.py` прогоняет его в CODESYS Control
+  Win и пишет трассировку `docs/media/data/trip-trace.csv`; в библиотеку и приложение не входит.
 
 ### Changed
 
