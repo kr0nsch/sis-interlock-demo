@@ -111,6 +111,11 @@ def write_csv(trace: dict[str, Any], out: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Вывод по-русски — в UTF-8 и в канал (pipe), и в консоль со старой кодовой страницей
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Демо-сценарий срабатывания ПАЗ в Control Win -> CSV")
     ap.add_argument("--out", type=Path, default=STAGE / "trip-trace.csv")
     args = ap.parse_args(argv)

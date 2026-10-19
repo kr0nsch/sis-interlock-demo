@@ -8,17 +8,20 @@
 привязку демо-объекта, тесты coUnit, таблицы истинности голосования и документы. Матрица —
 единственный источник: код и документация не расходятся, CI проверяет это командой
 `generate --check`. Нормативное описание формата и выходов — [DESIGN.md](DESIGN.md), разделы 9–12;
-здесь — как пользоваться и как генератор устроен.
+здесь — команды и устройство генератора. Цикл «правка матрицы → генерация → тесты → отчёт FAT» с
+примером и шпаргалкой формата — [USAGE.md](USAGE.md).
 
 ## Установка и запуск
 
 Python 3.11+, стандартная библиотека и `openpyxl` (только для XLSX).
 
-```
-python -m pip install -r requirements-dev.txt      # ruff, mypy, pytest, openpyxl
+```bash
+python -m pip install -r requirements-dev.txt
 python -m cemgen validate examples/separator/cem.csv
 python -m cemgen generate examples/separator/cem.csv
 ```
+
+`requirements-dev.txt` ставит ruff, mypy, pytest, hypothesis и openpyxl.
 
 Установка пакета (`python -m pip install -e .`) добавляет команду `cemgen` — та же точка входа.
 
@@ -34,7 +37,7 @@ python -m cemgen generate examples/separator/cem.csv
 
 Сообщение проверки — строка и колонка файла (как в Excel) и подсказка:
 
-```
+```text
 m.csv:28:F: CEM-E016 vote «3oo3» не из списка. Как исправить: впишите 1oo1, 1oo2, 2oo2 или 2oo3.
 ```
 
@@ -49,7 +52,7 @@ m.csv:28:F: CEM-E016 vote «3oo3» не из списка. Как исправи
 | `src/POUs/Generated/PRG_Sis/`, `F_SisIoNormal/`, `F_SisIoKeys/` | цикл ПАЗ; нормальные значения входов; ключи и кнопка |
 | `tests/GVLs/Generated/GVL_VoteTruthTable.gvl.st` | 36 таблиц истинности (4188 строк) — ожидаемые байты от эталонной модели |
 | `tests/POUs/Generated/FB_VoteTruth_Test/` | 36 тестов: `F_VoteEval` и `FB_Voting` по всем схемам, политикам и видам входа |
-| `tests/POUs/Generated/FB_CemGenNN_Test/` | сценарии по матрице, не больше 40 тестов в наборе (для демо — 71: наборы 01 и 02) |
+| `tests/POUs/Generated/FB_CemGenNN_Test/` | сценарии по матрице, не больше 40 тестов в наборе (для демо — 83: наборы 01–03) |
 | `tests/GVLs/Generated/GVL_TestsGenerated.gvl.st` | экземпляры наборов, `{attribute 'linkalways'}` |
 | `docs/cause_effect_matrix.md`, `docs/cause_effect_matrix.html` | матрица, причины, следствия, голосование, каналы, CRC; HTML — для печати на A3 |
 | `docs/truth_tables/VOTING.md` | таблицы деградации 5.3 и полные таблицы `F_VoteEval` |
@@ -93,8 +96,8 @@ flowchart LR
 | `iolistgen_plugin.py` | необязательный адаптер для iolistgen (ниже) |
 
 Эталонная модель написана по тексту контракта независимо от ST. Её независимо проверяют:
-таблицы 5.3 и временная диаграмма 6.11 (pytest), таблицы истинности команды A из её собственной
-модели (`tools_project/vote_model.py`) — совпадают во всех 4188 строках, — и прогон сгенерированных
+таблицы 5.3 и временная диаграмма 6.11 (pytest), таблицы истинности второй, независимой модели
+(`tools_project/vote_model.py`) — совпадают во всех 4188 строках, — и прогон сгенерированных
 тестов на настоящих ФБ в CODESYS Control Win V3 ([TEST_REPORT.md](TEST_REPORT.md)).
 
 ## Протокол FAT и отчёт
@@ -124,12 +127,13 @@ flowchart LR
 
 ## Плагин iolistgen
 
-Проект 07 (iolistgen) генерирует код по перечню сигналов, а матрица причин и следствий — другой
-исходный документ, поэтому `cemgen` — отдельный пакет (решение D-04). Для тех, кто держит перечень
-в iolistgen, есть тонкий адаптер: точка входа `sis-cem` в группе `iolistgen.generators`
-(`pyproject.toml`). Если `sis-interlock-demo` установлен в одном окружении с iolistgen:
+iolistgen (проект 06 портфолио, готовится к публикации) генерирует код по перечню сигналов, а
+матрица причин и следствий — другой исходный документ, поэтому `cemgen` — отдельный пакет
+([DESIGN.md, раздел 14](DESIGN.md#14-решения), D-04). Для тех, кто держит перечень в iolistgen, есть
+тонкий адаптер: точка входа `sis-cem` в группе `iolistgen.generators` (`pyproject.toml`). Если
+`sis-interlock-demo` установлен в одном окружении с iolistgen:
 
-```
+```bash
 iolistgen generate io_list.csv --only sis-cem --set sis-cem.cem=examples/separator/cem.csv
 ```
 
@@ -141,7 +145,7 @@ iolistgen generate io_list.csv --only sis-cem --set sis-cem.cem=examples/separat
 
 ## Разработка
 
-```
+```bash
 python -m ruff check . && python -m ruff format --check . && python -m mypy && python -m pytest
 python -m cemgen generate examples/separator/cem.csv --check
 CEMGEN_UPDATE_GOLDEN=1 python -m pytest pytests/test_generate.py -k golden   # обновить эталон

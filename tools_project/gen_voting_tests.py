@@ -533,6 +533,11 @@ def stats(files: dict[str, str]) -> tuple[int, int, int]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Вывод по-русски — в UTF-8 и в канал (pipe), и в консоль со старой кодовой страницей
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="только сравнить с файлами репозитория")
     parser.add_argument("--root", type=Path, default=REPO_ROOT, help="корень репозитория")

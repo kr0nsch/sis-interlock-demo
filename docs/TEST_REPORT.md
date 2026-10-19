@@ -361,8 +361,8 @@ CODESYS 3.5.17.30, профиль `CODESYS V3.5 SP17 Patch 3`, локально,
 
 | Проверка | Итог | Примечание |
 |---|---|---|
-| `ruff check`, `ruff format --check`, `mypy` | пройдено | 77 файлов Python; mypy (strict) — 58 модулей без замечаний |
-| `pytest` | 858 пройдено | `tools/tests` 528, `tools/project_checks` 107, `tools_project` 13, `pytests` (cemgen) 210; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 |
+| `ruff check`, `ruff format --check`, `mypy` | пройдено | 69 файлов Python; mypy (strict) — 60 модулей без замечаний |
+| `pytest` | 864 пройдено | `tools/tests` 534, `tools/project_checks` 107, `tools_project` 13, `pytests` (cemgen) 210; интеграционные — с настоящими iec_checker 0.4 и RuSTy 1.0.6 и соседним iolistgen (без них 11 тестов пропускаются: 853 пройдено) |
 | `cemgen validate --strict` (CSV и XLSX) | 0 ошибок, 0 предупреждений | `SIS-V101-CEM`, ревизия B, 10 причин, 7 следствий, CRC `16#CD40` |
 | `cemgen generate --check` | совпадает (277 файлов) | ST, тесты, документы по матрице и раздел 3 `SRS.md` |
 | `gen_voting_tests.py --check` | совпадает | 8 наборов, 36 тестов, 4188 ассертов |

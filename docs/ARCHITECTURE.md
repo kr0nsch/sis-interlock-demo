@@ -150,7 +150,7 @@ flowchart TB
 | `tests/POUs/TruthTables/`, `tests/GVLs/GVL_TestsTruthTables.gvl.st` | таблицы истинности второй модели | `tools_project/gen_voting_tests.py` |
 | `cemgen/`, `pytests/` | генератор и его тесты | вручную |
 | `tools_project/` | вторая модель голосования, генератор её таблиц, pytest | вручную |
-| `tools/` | инструменты шаблона: раскладка, сборка, линтер, iec_checker, RuSTy, `cds.py` | шаблон, не правятся |
+| `tools/` | инструменты из шаблона plc-repo-template: раскладка, сборка, линтер, iec_checker, RuSTy, `cds.py` | шаблон, не правятся |
 | `tools/project_checks/` | pytest соглашений проекта: дисклеймер, имена тестов, регистрация наборов | вручную |
 | `examples/separator/` | матрица демо-объекта (CSV — источник, XLSX — `cemgen convert`) | вручную |
 | `docs/` | контракт, SRS, матрица, протокол и отчёт FAT, отчёты | вручную и `cemgen` |
@@ -162,11 +162,11 @@ flowchart TB
 
 - **plc-process-lib** (пространство имён `PL`, соседний репозиторий): только `I_TimeSource`,
   `FB_SystemTime`, `FB_FakeTime` (тесты), `FB_Delay`, `F_IsFinite` и константы NE 43. ФБ устройств и
-  `FB_Alarm` логика ПАЗ не использует (D-01, D-17). `cds.py build` собирает и устанавливает
-  библиотеку из `../plc-process-lib` (или `PL_REPO`), если её нет; версия — новейшая установленная
-  (`"*"` в `tools/codesys/config.json`).
+  `FB_Alarm` логика ПАЗ не использует (D-01, D-17). Версия закреплена — `1.0.0.0` в
+  `tools/codesys/config.json`; если её нет в репозитории библиотек, `cds.py build` собирает и
+  устанавливает её из `../plc-process-lib` (или `PL_REPO`) на теге `v1.0.0`.
 - **coUnit 1.2.0.0** (CfUnit, MIT) — только тестовый проект.
 - **Python**: стандартная библиотека и `openpyxl` (только XLSX); ruff, mypy, pytest, hypothesis — для
   разработки.
-- **iolistgen** (проект 07) — необязательно: адаптер `cemgen/iolistgen_plugin.py` подключается, если
+- **iolistgen** (проект 06 портфолио, готовится к публикации) — необязательно: адаптер `cemgen/iolistgen_plugin.py` подключается, если
   пакет установлен в том же окружении (D-04).

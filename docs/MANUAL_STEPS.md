@@ -6,9 +6,9 @@
 
 Шаги, которые выполняет человек в консоли Windows и в IDE CODESYS. Всё, что можно выполнить без
 CODESYS (генератор, сборка текстов, линтер, статанализ), описано в
-[README](../README.md#быстрый-старт-без-железа) и выполняется в CI. Специфика проекта — разделы 5
+[README](../README.md#быстрый-старт) и выполняется в CI. Специфика проекта — разделы 5
 (библиотека plc-process-lib и полная проверка), 9 (демо-приложение в IDE), 10 (изменение матрицы)
-и 11 (протокол FAT).
+и 11 (протокол FAT); цикл работы с матрицей с примером и шпаргалкой формата — [USAGE.md](USAGE.md).
 
 Команды разделов 3–7 проверены прогоном на CODESYS V3.5 SP17 Patch 3 (3.5.17.30, 32-битная сборка
 ОВЕН) и CODESYS Control Win V3 в пользовательском процессе (16.10.2026), включая сборку, установку
@@ -133,9 +133,11 @@ setx CODESYS_PROFILE "CODESYS V3.5 SP17 Patch 3"
 `PL.FB_FakeTime`, `PL.F_IsFinite`, константы NE 43). Клонируйте репозиторий библиотеки рядом —
 `..\plc-process-lib` — или задайте путь в `PL_REPO`. Если библиотеки нет в репозитории библиотек
 CODESYS, первый `build`, `check` или `test` соберёт её там (`cds.py library --install`) и повторит
-задание; проверить, что установлено: `python tools\codesys\cds.py deps --check`. Версия — новейшая
-установленная (`"*"` в `tools/codesys/config.json`); для релиза закрепите точную (раздел 7.3).
-Проверено 19.10.2026: plc-process-lib 1.0.0.0 (закреплена в `config.json`), собрана из соседнего репозитория.
+задание; проверить, что установлено: `python tools\codesys\cds.py deps --check`. Версия закреплена:
+`1.0.0.0` в `tools/codesys/config.json` (раздел 7.3), поэтому соседний репозиторий должен быть на теге
+`v1.0.0` — `git clone --branch v1.0.0 https://github.com/kr0nsch/plc-process-lib.git ..\plc-process-lib`;
+репозиторий другой версии `cds.py` для сборки не примет. Проверено 19.10.2026: plc-process-lib 1.0.0.0 собрана из
+соседнего репозитория.
 
 **Полная проверка этого проекта** (перед коммитом и релизом; DESIGN.md, 12.8):
 
@@ -315,7 +317,7 @@ python tools\codesys\cds.py roundtrip
 ### 7.3. Проект, который использует библиотеку портфолио
 
 В этом репозитории так подключена plc-process-lib (`tools/codesys/config.json`, ключ
-`plc-process-lib`, версия `*` и `library.libraries`); ниже — общий порядок.
+`plc-process-lib`, версия `1.0.0.0` и `library.libraries`); ниже — общий порядок.
 
 1. Клонировать репозиторий библиотеки рядом: `..\plc-process-lib` (или задать путь в переменной из
    `build_from_repo`, например `PL_REPO`) и переключить его на нужный тег.
@@ -427,18 +429,20 @@ _В IDE эта последовательность не выполнялась.
 Матрица `examples/separator/cem.csv` — единственный источник конфигурации, тестов по матрице и
 документов. Сгенерированные файлы (`src/**/Generated/`, `tests/**/Generated/`,
 `docs/cause_effect_matrix.*`, `docs/FAT_protocol.md`, `docs/truth_tables/VOTING.md`, раздел 3
-`docs/SRS.md`) руками не правятся: CI это заметит (`generate --check`), а ПЛК — по CRC.
+`docs/SRS.md`) руками не правятся: CI это заметит (`generate --check`). CRC в ПЛК охватывает только
+число причин и следствий и маски «X», поэтому ручную правку уставок, задержек и схем голосования в
+`GVL_SisCfg` ловит только `generate --check`. Цикл с примером и шпаргалкой формата — [USAGE.md](USAGE.md).
 
-1. Править CSV (UTF-8, разделитель `;`) или XLSX (лист `CEM`):
-   `python -m cemgen convert examples/separator/cem.csv build\cem.xlsx`, правка в Excel, обратно —
-   `python -m cemgen convert build\cem.xlsx examples/separator/cem.csv`. Поднять `revision` и `date`
-   в `[header]`.
+1. Править CSV (UTF-8, разделитель `;`) или копию XLSX (лист `CEM`) `examples/separator/cem.xlsx` в
+   Excel и вернуть правку в CSV: `python -m cemgen convert examples/separator/cem.xlsx
+   examples/separator/cem.csv`. Поднять `revision` и `date` в `[header]`.
 2. `python -m cemgen validate examples/separator/cem.csv --strict` — ошибки с номером строки и
    колонкой файла (как в Excel) и подсказкой «Как исправить».
 3. `python -m cemgen generate examples/separator/cem.csv` — печатает новые, изменённые и удалённые
    файлы и число тестов по матрице.
-4. Если меняли XLSX в репозитории: `python -m cemgen convert examples/separator/cem.csv
-   examples/separator/cem.xlsx` (байты XLSX недетерминированы — коммитится вручную).
+4. Если правили CSV, обновить копию XLSX: `python -m cemgen convert examples/separator/cem.csv
+   examples/separator/cem.xlsx` (CI проверяет обе, pytest сравнивает их модели; байты XLSX
+   недетерминированы — файл коммитится вручную).
 5. Полная проверка (раздел 5), затем `cemgen fat-report` (раздел 11). В ревью — дифф матрицы,
    `GVL_SisCfg.gvl.st` (маски, уставки, CRC), тестов и документов.
 
@@ -454,4 +458,4 @@ _В IDE эта последовательность не выполнялась.
   автотестов есть результаты и все пройдены; «не соответствует» — с сообщением первого упавшего
   теста; «не выполнялся» — нет результатов. Код выхода 1, если есть упавшие тесты.
 - Раздел 8 протокола (замечания и подписи) заполняется вручную. FAT на реальном шкафу с ПЛК210 и
-  модулями ввода-вывода — вне рамок демо.
+  модулями ввода-вывода — вне рамок демо. Как читать отчёт — [USAGE.md, раздел 4](USAGE.md#4-как-читать-отчёт-fat).

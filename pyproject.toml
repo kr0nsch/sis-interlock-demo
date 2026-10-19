@@ -19,8 +19,8 @@ dependencies = ["openpyxl>=3.1"]
 [project.scripts]
 cemgen = "cemgen.cli:main"
 
-# Необязательный адаптер: генератор sis-cem для iolistgen (проект 07), если тот установлен в том же
-# окружении; cemgen от iolistgen не зависит (DESIGN.md, D-04, 10.7)
+# Необязательный адаптер: генератор sis-cem для iolistgen (проект 06 портфолио), если тот установлен
+# в том же окружении; cemgen от iolistgen не зависит (DESIGN.md, D-04, 10.7)
 [project.entry-points."iolistgen.generators"]
 sis-cem = "cemgen.iolistgen_plugin:SisCemGenerator"
 
