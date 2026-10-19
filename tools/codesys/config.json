@@ -73,6 +73,14 @@
       "placeholder": "Standard",
       "namespace": "Standard",
       "qualified_only": false
+    },
+    "plc-process-lib": {
+      "label": "plc-process-lib (PL): I_TimeSource, FB_Delay, FB_FakeTime, F_IsFinite",
+      "namespace": "PL",
+      "title": "plc-process-lib",
+      "company": "plc-portfolio",
+      "version": "*",
+      "build_from_repo": {"env": "PL_REPO", "default": "../plc-process-lib"}
     }
   },
   "library": {
@@ -81,16 +89,16 @@
       "Библиотеку однозначно задают company, title и version: их не меняют от сборки к сборке; новая версия — новый version.",
       "exclude — объекты src/, которые в библиотеку не входят (точка входа приложения); libraries — ключи libraries, на которые ссылается сама библиотека; они же подключаются к проектам всех режимов (normal, test) и к проверке cds.py check."
     ],
-    "title": "plc-repo-template",
+    "title": "sis-interlock-demo",
     "company": "plc-portfolio",
     "version": {"env": "CDS_LIBRARY_VERSION", "default": "0.1.0.0"},
-    "default_namespace": "TPL",
+    "default_namespace": "SIS",
     "placeholder": null,
     "author": "<ИМЯ ФАМИЛИЯ>",
-    "description": "Шаблон ПЛК-репозитория портфолио: пример ФБ с режимами и диагностикой, функция F_Clamp",
+    "description": "Демонстрация логики ПАЗ: голосование MooN, матрица причин и следствий, журнал событий",
     "released": false,
     "exclude": ["PRG_Main"],
-    "libraries": ["standard"],
+    "libraries": ["standard", "plc-process-lib"],
     "path": {"env": "CDS_LIBRARY", "default": "build/{name}.library"},
     "compiled_path": {"env": "CDS_COMPILED_LIBRARY", "default": "build/{name}.compiled-library"}
   },
