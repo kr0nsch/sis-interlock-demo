@@ -7,8 +7,14 @@
 #   file   — шаблон fnmatch пути исходника (src/POUs/...) или имени собранного файла (FB_X.st);
 #            '*' захватывает и '/';
 #   match  — необязательно: регулярное выражение по тексту сообщения;
-#   reason — обязательно: почему находка допустима.
+#   reason — обязательно: почему находка допустима;
+#   checker — необязательно: "v0.4" (обязательная проверка, бинарник) или "nightly" (необязательное
+#            задание CI, Docker-образ, закреплённый по дайджесту в ci.yml). Запись с этим ключом
+#            применяется и проверяется на использование только при прогоне своей версией.
 # ParserError и LexingError обосновать нельзя: их исправляют в коде или в понижении iec-checker.
+# С --tests (v0.4) используется каждая запись, кроме checker = "nightly" (проверяет pytest:
+# test_run_iec_checker.py::test_integration_repository_sources). Записи для образа nightly — в последнем
+# разделе: их пересматривают вместе с дайджестом образа.
 
 [[allow]]
 id = "PLCOPEN-CP3"
@@ -127,9 +133,74 @@ reason = "Ложное срабатывание iec_checker 0.4: вызов эк
 id = "UnusedVariable"
 file = "src/POUs/Generated/*.decl.st"
 match = "variable: (STIO|FBUNIT)$"
-reason = "Ложное срабатывание iec_checker 0.4: VAR_IN_OUT stIo используется обращениями к полям (stIo.rPT101A_mA), экземпляр fbUnit — вызовом и чтением выходов"
+checker = "v0.4"
+reason = "Ложное срабатывание iec_checker 0.4: VAR_IN_OUT stIo используется обращениями к полям (stIo.rPT101A_mA), экземпляр fbUnit — вызовом и чтением выходов. Образ nightly вызов экземпляра считает использованием, а параметр stIo проверяет правилом PLCOPEN-CP17 (раздел nightly)"
 
 [[allow]]
 id = "PLCOPEN-CP9"
 file = "src/POUs/Generated/*"
 reason = "Сгенерированные привязка FB_SisApp и F_SisIoNormal — линейная последовательность присваиваний без ветвлений (классическая сложность 1); число операторов растёт с числом каналов матрицы"
+
+# =====================================================================================================
+# Только образ nightly (checker = "nightly"). В v0.4 этих находок нет. Каждая находка проверена по
+# исходникам (docs/STATIC_ANALYSIS.md, раздел «iec_checker nightly»): дефектов в коде нет.
+# PLCOPEN-CP17 «неиспользуемый параметр» — обращения через поля и аргументы, которые правило не считает
+# использованием, и артефакты понижения в стендах тестов; PLCOPEN-L13/L22 — именованный аргумент uiRow
+# в сгенерированных тестах таблиц истинности
+# =====================================================================================================
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "src/*"
+checker = "nightly"
+match = "parameter '(STIO|STIN|STCMD|STSTS|STCFG)'"
+reason = "Ложное срабатывание CP17: структуры ввода-вывода, входов голосования, команд, состояний и конфигурации используются через поля (stIo.rPT101A_mA, stIn.axDi[k], stSts.xTrip := ..., stCfg.eArch) и передачу полей аргументом во вложенные ФБ (FB_SisUnit: stCmd := stCmd.astVote[uiI], stCmd := stCmd.stCem); такое обращение CP17 не считает ни чтением, ни записью"
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "tests/POUs/Generated/FB_VoteTruth_Test/*.method.decl.st"
+checker = "nightly"
+match = "parameter '(STRES|STSTS|STIN|STCMD)'"
+reason = "Ложное срабатывание CP17 в сгенерированных помощниках (cemgen): EncodeEval, EncodeFb читают поля структур результата (stRes.xTrip, stSts.eArchEff), RowInputs пишет поля stIn и stCmd строки таблицы"
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "tests/POUs/Helpers/FB_*Rig/FB_*Rig.decl.st"
+checker = "nightly"
+match = "parameter '(STIN|ASTIN|STCMD|STCFG|STCEMCFG|ASTVOTECFG|AXCAUSEIN|XBYPASSPERMIT|XOVERRIDEPERMIT|XRESETHW|UICAUSE)'"
+reason = "Артефакт понижения: у стендов FB_CemRig, FB_UnitRig, FB_VotingRig тела нет — входы стенда (их задают тесты по имени экземпляра и методы-установщики SetAi, SetDi, PressReset) передаёт ФБ под тестом метод Cycle, который сборка iec-checker выносит в отдельную функцию"
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "tests/POUs/Helpers/FB_*Rig/*.method.decl.st"
+checker = "nightly"
+match = "parameter '(UICH|UIEFFECT)'"
+reason = "Ложное срабатывание CP17: вход метода стенда используется только как индекс массива (fbVote.stSts.aeBypass[uiCh], fbCem.axEffectOut[uiEffect])"
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "tests/POUs/Helpers/FB_SisHarness/FB_SisHarness.decl.st"
+checker = "nightly"
+match = "parameter '(STIO|STCMD)'"
+reason = "Артефакт понижения: у стенда FB_SisHarness тела нет — stIo и stCmd (их задают тесты по имени экземпляра) используют методы Cycle, Keys, SetNormal, PressReset, которые сборка iec-checker выносит в отдельные функции"
+
+[[allow]]
+id = "PLCOPEN-CP17"
+file = "tests/POUs/Suites/FB_SisUnit_Test/Setup.method.decl.st"
+checker = "nightly"
+match = "parameter 'FBRIG'"
+reason = "Ложное срабатывание CP17: стенд fbRig (VAR_IN_OUT) настраивается через поля экземпляра (fbRig.stCemCfg := ..., fbRig.astIn[1].axDi[uiK] := TRUE)"
+
+[[allow]]
+id = "PLCOPEN-L22"
+file = "tests/POUs/Generated/FB_VoteTruth_Test/*.method.impl.st"
+checker = "nightly"
+match = "variable 'UIROW'"
+reason = "Ложное срабатывание: переменная цикла uiRow внутри FOR не меняется. Строки RowStates(uiRow := uiRow, ...) и RowInputs(uiRow := uiRow, ...) — именованный аргумент: слева имя входа метода, совпадающее с именем переменной цикла; L22 принимает его за присваивание"
+
+[[allow]]
+id = "PLCOPEN-L13"
+file = "tests/POUs/Generated/FB_VoteTruth_Test/*.method.impl.st"
+checker = "nightly"
+match = "variable 'UIROW'"
+reason = "Ложное срабатывание: после цикла переменная uiRow не используется. В строке MismatchText(..., uiRow := uiFirstRow, ...) uiRow — имя входа метода в именованном аргументе, а передаётся uiFirstRow"
