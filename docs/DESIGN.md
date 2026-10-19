@@ -1525,7 +1525,7 @@ python tools/codesys/cds.py test && python tools/codesys/cds.py roundtrip
 | `tests/POUs/PRG_Tests/` | A | только `coUnit.RUN();` |
 | `tests/GVLs/GVL_TestsSis.gvl.st`, `tests/POUs/Suites/*`, `tests/DUTs/U_SisEnumInt.dut.st` | A | 12.3 |
 | `tools/project_checks/` (`test_disclaimer.py`, `test_conventions.py`) | A | 3.1, 12.1 |
-| `tools/check/st_lint.toml`, `iec_checker_allow.toml`, `rusty_exclude.txt` | A — общие записи; B — раздел «сгенерированный код» в конце | |
+| `tools/check/st_lint.toml`, `iec_checker_allow.toml`, `rusty_exclude.txt` | A — общие записи; B — раздел «сгенерированный код» в конце (в `iec_checker_allow.toml` — перед разделом nightly) | |
 | `src/**/Generated/`, `tests/**/Generated/` | B (генерирует `cemgen`) | 10.2 |
 | `tests/POUs/Helpers/FB_SisHarness/` | B | 12.5 |
 | `cemgen/`, `pytests/`, `examples/separator/` | B | разделы 9–11 |
