@@ -1,19 +1,38 @@
-# Настройки Python-инструментов шаблона (tools/): ruff, mypy, pytest.
+# Пакет cemgen (генератор ПАЗ по матрице причин и следствий) и настройки Python-инструментов
+# репозитория: ruff, mypy, pytest — для cemgen/, pytests/ и инструментов шаблона (tools/).
 # tools/codesys/*.py выполняются и в IronPython 2.7 (CODESYS Scripting): для них отключены
 # правила, которые предлагают синтаксис Python 3 (pyupgrade и др.).
 
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "plc-repo-template-tools"
+name = "sis-interlock-demo"
 version = "0.1.0"
-description = "Инструменты шаблона ПЛК-репозитория: раскладка ST, сборка, линтер, проверки"
+description = "Демонстрация логики ПАЗ на ST: голосование MooN, матрица причин и следствий, генератор cemgen"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+dependencies = ["openpyxl>=3.1"]
+
+[project.scripts]
+cemgen = "cemgen.cli:main"
+
+# Необязательный адаптер: генератор sis-cem для iolistgen (проект 07), если тот установлен в том же
+# окружении; cemgen от iolistgen не зависит (DESIGN.md, D-04, 10.7)
+[project.entry-points."iolistgen.generators"]
+sis-cem = "cemgen.iolistgen_plugin:SisCemGenerator"
+
+[tool.setuptools]
+packages = ["cemgen"]
 
 [tool.ruff]
 line-length = 120
 target-version = "py311"
 extend-exclude = ["build"]
 # Каталоги модулей проекта (для сортировки импортов: first-party)
-src = ["tools", "tools/codesys", "tools/check", "tools/tests"]
+src = [".", "pytests", "tools", "tools/codesys", "tools/check", "tools/tests", "tools/project_checks", "tools_project"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "RUF"]
@@ -35,8 +54,8 @@ exclude = ["tools/codesys/*.py"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tools"]
-mypy_path = ["tools", "tools/codesys", "tools/check"]
+files = ["cemgen", "pytests", "tools", "tools_project"]
+mypy_path = ["tools", "tools/codesys", "tools/check", "tools_project"]
 strict = true
 warn_unreachable = true
 # Скрипты CODESYS (IronPython 2.7) используют глобальные объекты среды CODESYS (projects,
@@ -46,10 +65,17 @@ exclude = [
     '^tools/tests/fixtures/',
 ]
 
+[[tool.mypy.overrides]]
+# openpyxl — без обязательных заглушек типов (types-openpyxl необязателен); iolistgen — необязательный
+# пакет для адаптера cemgen.iolistgen_plugin
+module = ["openpyxl", "openpyxl.*", "iolistgen", "iolistgen.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
-testpaths = ["tools/tests"]
-pythonpath = ["tools", "tools/codesys", "tools/check"]
+testpaths = ["tools/tests", "tools/project_checks", "tools_project", "pytests"]
+pythonpath = [".", "tools", "tools/codesys", "tools/check", "tools_project"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: проверки с настоящими plc (RuSTy) и iec_checker; пропускаются, если инструмента нет",
+    "golden: эталонные файлы генератора cemgen (обновление — переменная CEMGEN_UPDATE_GOLDEN=1)",
 ]

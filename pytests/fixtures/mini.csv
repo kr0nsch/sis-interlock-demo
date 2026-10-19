@@ -1,0 +1,23 @@
+# Мини-матрица для тестов генератора cemgen: ai 1oo1, di 2oo2 с байпасом и обходом, ext; без тегов ключей.
+# Колонки причин — в другом порядке, чем в демо-матрице, и без необязательных колонок.
+[header]
+format;cem/1
+object;U-301
+object_name;Тестовая установка U-301 (pytest)
+title;Мини-матрица для тестов генератора
+document;TEST-U301-CEM
+revision;1
+date;2026-10-16
+author;pytest
+start_tripped;no
+test_step;500ms
+[matrix]
+;;;;;;;;;;;;;;;;;effect_no;1;2
+;;;;;;;;;;;;;;;;;effect_tag;XV301;M302
+;;;;;;;;;;;;;;;;;effect_description;Отсечной клапан XV301;Насос M302
+;;;;;;;;;;;;;;;;;actuator;Соленоид;Реле разрешения
+;;;;;;;;;;;;;;;;;safe_state;закрыт;остановлен
+no;tag;description;signal;source;vote;trip_on;setpoint;units;range_lo;range_hi;normal;delay;bypass_max;bypass_time;override;override_time;>>
+1;TSH301;Температура высокая;ai;TT301;1oo1;high;80;°C;0;100;40;1s;0;0s;no;;;X;
+2;PSL302;Давление низкое;di;PS302A, PS302B;2oo2;0;;;;;;0s;1;1h;yes;10m;;X;X
+3;XS303;Внешний останов;ext;XS303;-;1;;;;;;500ms;0;0s;no;;;;x
