@@ -1,0 +1,13 @@
+coUnit.TEST('Log_GetEventBeyondCount_Empty');
+stEv.eKind := E_SisEventKind.ResetDone;
+stEv.uiCause := 4;
+stEv.ltTime := LTIME#3H;
+fbLog.AddEvent(stEvent := stEv);
+stEv := fbLog.GetEvent(uiBack := 1);
+AssertEquals_INT(Expected := 0, Actual := TO_INT(stEv.eKind), Message := 'beyond count: kind None');
+AssertEquals_UDINT(Expected := 0, Actual := stEv.udiSeq, Message := 'beyond count: seq 0');
+AssertEquals_UINT(Expected := 0, Actual := stEv.uiCause, Message := 'beyond count: cause 0');
+AssertEquals_LTIME(Expected := LTIME#0S, Actual := stEv.ltTime, Message := 'beyond count: time 0');
+stEv := fbLog.GetEvent(uiBack := 0);
+AssertEquals_UINT(Expected := 4, Actual := stEv.uiCause, Message := 'last event present');
+coUnit.TEST_FINISHED();

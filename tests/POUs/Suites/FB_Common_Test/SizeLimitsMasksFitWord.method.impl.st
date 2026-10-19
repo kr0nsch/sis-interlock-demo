@@ -1,0 +1,10 @@
+coUnit.TEST('Common_SizeLimits_MasksFitWord');
+AssertTrue(Condition := GVL_Const.SIS_CAUSES_MAX <= TO_UINT(SIZEOF(wMask)) * 8, Message := 'causes fit WORD mask');
+AssertTrue(Condition := GVL_Const.SIS_EFFECTS_MAX <= TO_UINT(SIZEOF(wMask)) * 8, Message := 'effects fit WORD mask');
+AssertEquals_UINT(Expected := 16, Actual := GVL_Const.SIS_CAUSES_MAX, Message := 'SIS_CAUSES_MAX');
+AssertEquals_UINT(Expected := 16, Actual := GVL_Const.SIS_EFFECTS_MAX, Message := 'SIS_EFFECTS_MAX');
+AssertEquals_UINT(Expected := 3, Actual := GVL_Const.SIS_VOTE_CH_MAX, Message := 'SIS_VOTE_CH_MAX');
+AssertEquals_UINT(Expected := 64, Actual := GVL_Const.SIS_LOG_SIZE, Message := 'SIS_LOG_SIZE');
+AssertEquals_UINT(Expected := 16#FFFE, Actual := GVL_Const.SIS_FIRST_OUT_START, Message := 'SIS_FIRST_OUT_START');
+AssertEquals_UINT(Expected := 16#FFFF, Actual := GVL_Const.SIS_FIRST_OUT_CFG, Message := 'SIS_FIRST_OUT_CFG');
+coUnit.TEST_FINISHED();

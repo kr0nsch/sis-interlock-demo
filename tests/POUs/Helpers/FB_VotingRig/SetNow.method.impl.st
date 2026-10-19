@@ -1,0 +1,1 @@
+fbTime.SetNow(ltValue := ltValue);

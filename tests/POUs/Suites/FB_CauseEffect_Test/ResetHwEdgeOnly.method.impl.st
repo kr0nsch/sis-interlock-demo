@@ -1,0 +1,23 @@
+coUnit.TEST('Cem_ResetHw_EdgeOnly');
+fbRig.stCfg := CfgBase();
+fbRig.Cycle();
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);
+fbRig.axCauseIn[3] := FALSE;
+fbRig.Step(tStep := T#100MS);
+fbRig.xResetHw := TRUE;
+fbRig.Step(tStep := T#100MS);
+AssertEquals_WORD(Expected := 0, Actual := fbRig.fbCem.stSts.wCauseLatched, Message := 'rising edge: reset');
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);
+fbRig.axCauseIn[3] := FALSE;
+fbRig.Run(tDuration := T#1S, tStep := T#100MS);
+AssertEquals_WORD(Expected := 16#0004, Actual := fbRig.fbCem.stSts.wCauseLatched, Message := 'button held: no reset');
+fbRig.xResetHw := FALSE;
+fbRig.Step(tStep := T#100MS);
+fbRig.xResetHw := TRUE;
+fbRig.Step(tStep := T#100MS);
+AssertEquals_WORD(Expected := 0, Actual := fbRig.fbCem.stSts.wCauseLatched, Message := 'second press: reset');
+AssertEquals_UINT(Expected := 2, Actual := fbRig.fbLog.CountKind(eKind := E_SisEventKind.ResetDone),
+    Message := 'two resets');
+coUnit.TEST_FINISHED();

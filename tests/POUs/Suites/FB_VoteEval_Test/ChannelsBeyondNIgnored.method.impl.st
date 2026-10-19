@@ -1,0 +1,10 @@
+coUnit.TEST('Vote_ChannelsBeyondN_Ignored');
+aeCh[1] := E_ChannelState.Normal;
+aeCh[2] := E_ChannelState.Demand;
+aeCh[3] := E_ChannelState.Invalid;
+stRes := F_VoteEval(eArch := E_VoteArch.Vote1oo1, ePolicy := E_DegradePolicy.VoteTrip, aeCh := aeCh);
+AssertFalse(Condition := stRes.xTrip, Message := '1oo1: channels 2, 3 ignored');
+AssertFalse(Condition := stRes.xDegraded, Message := '1oo1: invalid channel 3 ignored');
+AssertEquals_UINT(Expected := 1, Actual := stRes.uiNormal, Message := '1oo1: one normal channel counted');
+AssertEquals_UINT(Expected := 0, Actual := stRes.uiDemand, Message := '1oo1: demand of channel 2 not counted');
+coUnit.TEST_FINISHED();

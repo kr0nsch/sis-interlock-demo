@@ -1,0 +1,11 @@
+coUnit.TEST('Cem_Latch_HeldAfterClear');
+fbRig.stCfg := CfgBase();
+fbRig.Cycle();
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);
+fbRig.axCauseIn[3] := FALSE;
+fbRig.Run(tDuration := T#1M, tStep := T#1S);
+AssertEquals_WORD(Expected := 16#0004, Actual := fbRig.fbCem.stSts.wCauseLatched, Message := 'still latched');
+AssertEquals_WORD(Expected := 0, Actual := fbRig.fbCem.stSts.wCausePresent, Message := 'demand gone');
+AssertFalse(Condition := fbRig.Out(uiEffect := 2), Message := 'effect 2 stays tripped');
+coUnit.TEST_FINISHED();

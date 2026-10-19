@@ -1,0 +1,12 @@
+coUnit.TEST('Cem_CrcMismatch_AllTripped');
+fbRig.stCfg := CfgBase();
+fbRig.stCfg.astEffect[2].wCauseMask := 16#0006;
+fbRig.Cycle();
+AssertEquals_WORD(Expected := GVL_Const.CEM_CFG_CRC, Actual := fbRig.fbCem.stSts.wCfgErr, Message := 'CRC error only');
+AssertFalse(Condition := fbRig.Out(uiEffect := 1), Message := 'effect 1 de-energized');
+AssertFalse(Condition := fbRig.Out(uiEffect := 2), Message := 'effect 2 de-energized');
+AssertFalse(Condition := fbRig.Out(uiEffect := 3), Message := 'effect 3 de-energized');
+stEv := fbRig.fbLog.LastOfKind(eKind := E_SisEventKind.CfgError);
+AssertEquals_REAL(Expected := 8.0, Actual := stEv.rValue, Delta := 0.0, Message := 'CfgError value = CEM_CFG_CRC');
+AssertEquals_UINT(Expected := 0, Actual := stEv.uiCause, Message := 'CfgError: no cause');
+coUnit.TEST_FINISHED();

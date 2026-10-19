@@ -1,0 +1,1 @@
+udiMark := fbLog.LastSeq;

@@ -1,0 +1,14 @@
+coUnit.TEST('Log_Clear_KeepsSeq');
+fbLog.AddEvent(stEvent := stEv);
+fbLog.AddEvent(stEvent := stEv);
+fbLog.AddEvent(stEvent := stEv);
+fbLog.Clear();
+AssertEquals_UINT(Expected := 0, Actual := fbLog.Count, Message := 'after Clear: count 0');
+AssertEquals_UDINT(Expected := 3, Actual := fbLog.LastSeq, Message := 'after Clear: seq kept');
+stEv := fbLog.GetEvent(uiBack := 0);
+AssertEquals_UDINT(Expected := 0, Actual := stEv.udiSeq, Message := 'after Clear: no record');
+fbLog.AddEvent(stEvent := stEv);
+stEv := fbLog.GetEvent(uiBack := 0);
+AssertEquals_UDINT(Expected := 4, Actual := stEv.udiSeq, Message := 'next event: seq 4');
+AssertEquals_UINT(Expected := 1, Actual := fbLog.Count, Message := 'next event: count 1');
+coUnit.TEST_FINISHED();

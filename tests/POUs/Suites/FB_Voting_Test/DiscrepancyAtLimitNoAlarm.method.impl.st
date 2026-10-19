@@ -1,0 +1,11 @@
+coUnit.TEST('Voting_Discrepancy_AtLimitNoAlarm');
+fbRig.stCfg := CfgAi(eArch := E_VoteArch.Vote2oo3, ePolicy := E_DegradePolicy.VoteTrip);
+fbRig.stCfg.rDiscrepancyMax_eu := 1.0;
+fbRig.SetAi(r1 := 40.0, r2 := 41.0, r3 := 40.5);
+fbRig.Cycle();
+AssertEquals_REAL(Expected := 1.0, Actual := fbRig.fbVote.stSts.rSpread_eu, Delta := 0.0, Message := 'spread 1.0');
+AssertFalse(Condition := fbRig.fbVote.stSts.xDiscrepancy, Message := 'spread = limit: no alarm');
+fbRig.SetAi(r1 := 40.0, r2 := 41.25, r3 := 40.5);
+fbRig.Cycle();
+AssertTrue(Condition := fbRig.fbVote.stSts.xDiscrepancy, Message := 'spread 1.25 > limit, delay 0: alarm');
+coUnit.TEST_FINISHED();

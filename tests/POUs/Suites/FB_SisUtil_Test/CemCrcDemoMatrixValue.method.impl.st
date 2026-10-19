@@ -1,0 +1,14 @@
+coUnit.TEST('Sis_CemCrc_DemoMatrixValue');
+stCfg.uiCauseCount := 10;
+stCfg.uiEffectCount := 7;
+stCfg.astEffect[1].wCauseMask := 16#01E7;
+stCfg.astEffect[2].wCauseMask := 16#00C0;
+stCfg.astEffect[3].wCauseMask := 16#01EA;
+stCfg.astEffect[4].wCauseMask := 16#03EA;
+stCfg.astEffect[5].wCauseMask := 16#03EA;
+stCfg.astEffect[6].wCauseMask := 16#03FF;
+stCfg.astEffect[7].wCauseMask := 16#03FF;
+AssertEquals_WORD(Expected := 16#CD40, Actual := F_CemCrc(stCfg := stCfg), Message := 'demo matrix CRC');
+stCfg.astEffect[2].wCauseMask := 16#00C1;
+AssertTrue(Condition := F_CemCrc(stCfg := stCfg) <> 16#CD40, Message := 'one changed X changes CRC');
+coUnit.TEST_FINISHED();

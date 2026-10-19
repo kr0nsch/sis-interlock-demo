@@ -1,0 +1,13 @@
+coUnit.TEST('Common_EnumCodes_MatchContract');
+AssertEquals_INT(Expected := 11, Actual := TO_INT(E_VoteArch.Vote1oo1), Message := 'Vote1oo1 = 11');
+AssertEquals_INT(Expected := 23, Actual := TO_INT(E_VoteArch.Vote2oo3), Message := 'Vote2oo3 = 23');
+AssertEquals_INT(Expected := 99, Actual := TO_INT(E_VoteArch.ForcedTrip), Message := 'ForcedTrip = 99');
+AssertEquals_INT(Expected := 3, Actual := TO_INT(E_DegradePolicy.DegradeAvailable), Message := 'DegradeAvailable = 3');
+AssertEquals_INT(Expected := 4, Actual := TO_INT(E_ChannelState.Bypassed), Message := 'Bypassed = 4');
+AssertEquals_INT(Expected := 3, Actual := TO_INT(E_BypassState.Denied), Message := 'Denied = 3');
+AssertEquals_INT(Expected := 5, Actual := TO_INT(E_SafeState.Alarm), Message := 'Alarm = 5');
+AssertEquals_INT(Expected := 2, Actual := TO_INT(E_CauseSource.External), Message := 'External = 2');
+AssertEquals_INT(Expected := 4, Actual := TO_INT(E_SisEventKind.FirstOut), Message := 'FirstOut = 4');
+AssertEquals_INT(Expected := 13, Actual := TO_INT(E_SisEventKind.BypassOn), Message := 'BypassOn = 13');
+AssertEquals_INT(Expected := 23, Actual := TO_INT(E_SisEventKind.StartTrip), Message := 'StartTrip = 23');
+coUnit.TEST_FINISHED();

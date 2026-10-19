@@ -1,0 +1,12 @@
+coUnit.TEST('Cem_CmdBits_Cleared');
+fbRig.stCfg := CfgBase();
+fbRig.stCmd.xReset := TRUE;
+fbRig.stCmd.xStartupOverride := TRUE;
+fbRig.stCmd.wOverrideReq := 16#FFFF;
+fbRig.stCmd.wOverrideCancel := 16#FFFF;
+fbRig.Cycle();
+AssertFalse(Condition := fbRig.stCmd.xReset, Message := 'xReset cleared');
+AssertFalse(Condition := fbRig.stCmd.xStartupOverride, Message := 'xStartupOverride cleared');
+AssertEquals_WORD(Expected := 0, Actual := fbRig.stCmd.wOverrideReq, Message := 'wOverrideReq cleared');
+AssertEquals_WORD(Expected := 0, Actual := fbRig.stCmd.wOverrideCancel, Message := 'wOverrideCancel cleared');
+coUnit.TEST_FINISHED();

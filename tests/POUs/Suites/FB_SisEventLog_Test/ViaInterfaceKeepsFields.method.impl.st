@@ -1,0 +1,20 @@
+coUnit.TEST('Log_ViaInterface_KeepsFields');
+itfLog := fbLog;
+stEv.ltTime := LTIME#1H2M;
+stEv.udiSeq := 999;
+stEv.rValue := 2.5;
+stEv.eKind := E_SisEventKind.DiscrepancyOn;
+stEv.uiCause := 6;
+stEv.uiEffect := 0;
+stEv.uiChannel := 3;
+xAdded := itfLog.AddEvent(stEvent := stEv);
+AssertTrue(Condition := xAdded, Message := 'AddEvent via interface: TRUE');
+stGot := fbLog.GetEvent(uiBack := 0);
+AssertEquals_UDINT(Expected := 1, Actual := stGot.udiSeq, Message := 'seq from log, not from source');
+AssertEquals_LTIME(Expected := LTIME#1H2M, Actual := stGot.ltTime, Message := 'time kept');
+AssertEquals_REAL(Expected := 2.5, Actual := stGot.rValue, Delta := 0.0, Message := 'value kept');
+AssertEquals_INT(Expected := TO_INT(E_SisEventKind.DiscrepancyOn), Actual := TO_INT(stGot.eKind),
+    Message := 'kind kept');
+AssertEquals_UINT(Expected := 6, Actual := stGot.uiCause, Message := 'cause kept');
+AssertEquals_UINT(Expected := 3, Actual := stGot.uiChannel, Message := 'channel kept');
+coUnit.TEST_FINISHED();

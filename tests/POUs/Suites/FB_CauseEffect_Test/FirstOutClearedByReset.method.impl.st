@@ -1,0 +1,16 @@
+coUnit.TEST('Cem_FirstOut_ClearedByReset');
+fbRig.stCfg := CfgBase();
+fbRig.Cycle();
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);
+fbRig.axCauseIn[3] := FALSE;
+fbRig.Step(tStep := T#100MS);
+fbRig.PressReset();
+AssertEquals_UINT(Expected := 0, Actual := fbRig.fbCem.stSts.uiFirstOut, Message := 'reset: first-out cleared');
+AssertEquals_LTIME(Expected := LTIME#0S, Actual := fbRig.fbCem.stSts.ltFirstOut, Message := 'reset: time cleared');
+AssertEquals_WORD(Expected := 0, Actual := fbRig.fbCem.stSts.wFirstOutMask, Message := 'reset: mask cleared');
+fbRig.axCauseIn[1] := TRUE;
+fbRig.Run(tDuration := T#2S100MS, tStep := T#100MS);
+AssertEquals_UINT(Expected := 1, Actual := fbRig.fbCem.stSts.uiFirstOut, Message := 'new first-out: cause 1');
+AssertEquals_UDINT(Expected := 2, Actual := fbRig.fbCem.stSts.udiTripCount, Message := 'trip count 2');
+coUnit.TEST_FINISHED();

@@ -1,0 +1,20 @@
+coUnit.TEST('Cem_EffectTripEvent_CarriesCause');
+fbRig.stCfg := CfgBase();
+fbRig.Cycle();
+fbRig.axCauseIn[1] := TRUE;
+fbRig.Run(tDuration := T#2S100MS, tStep := T#100MS);
+stEv := fbRig.fbLog.GetEvent(uiBack := 1);
+AssertEquals_UINT(Expected := 1, Actual := stEv.uiEffect, Message := 'EffectTrip effect 1');
+AssertEquals_UINT(Expected := 1, Actual := stEv.uiCause, Message := 'EffectTrip effect 1: cause 1');
+stEv := fbRig.fbLog.GetEvent(uiBack := 0);
+AssertEquals_UINT(Expected := 3, Actual := stEv.uiEffect, Message := 'EffectTrip effect 3');
+AssertEquals_UINT(Expected := 1, Actual := stEv.uiCause, Message := 'EffectTrip effect 3: cause 1');
+fbRig.axCauseIn[3] := TRUE;
+fbRig.Step(tStep := T#100MS);
+stEv := fbRig.fbLog.GetEvent(uiBack := 0);
+AssertEquals_INT(Expected := TO_INT(E_SisEventKind.EffectTrip), Actual := TO_INT(stEv.eKind), Message := 'EffectTrip');
+AssertEquals_UINT(Expected := 2, Actual := stEv.uiEffect, Message := 'only effect 2 is new');
+AssertEquals_UINT(Expected := 3, Actual := stEv.uiCause, Message := 'EffectTrip effect 2: cause 3');
+AssertEquals_UINT(Expected := 3, Actual := fbRig.fbLog.CountKind(eKind := E_SisEventKind.EffectTrip),
+    Message := 'effect 3 already tripped: no second event');
+coUnit.TEST_FINISHED();

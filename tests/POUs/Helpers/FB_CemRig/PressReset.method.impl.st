@@ -1,0 +1,2 @@
+stCmd.xReset := TRUE;
+Cycle();

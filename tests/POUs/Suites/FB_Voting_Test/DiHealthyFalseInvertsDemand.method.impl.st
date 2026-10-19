@@ -1,0 +1,13 @@
+coUnit.TEST('Voting_DiHealthyFalse_InvertsDemand');
+fbRig.stCfg := CfgDi(eArch := E_VoteArch.Vote1oo1, ePolicy := E_DegradePolicy.VoteTrip);
+fbRig.stCfg.xDiHealthy := FALSE;
+fbRig.SetDi(x1 := FALSE, x2 := FALSE, x3 := FALSE);
+fbRig.Cycle();
+AssertFalse(Condition := fbRig.fbVote.xTrip, Message := 'healthy FALSE, input FALSE: no trip');
+fbRig.SetDi(x1 := TRUE, x2 := FALSE, x3 := FALSE);
+fbRig.Cycle();
+AssertTrue(Condition := fbRig.fbVote.xTrip, Message := 'healthy FALSE, input TRUE: trip');
+fbRig.stCfg.xDiHealthy := TRUE;
+fbRig.Cycle();
+AssertFalse(Condition := fbRig.fbVote.xTrip, Message := 'healthy TRUE, input TRUE: no trip');
+coUnit.TEST_FINISHED();

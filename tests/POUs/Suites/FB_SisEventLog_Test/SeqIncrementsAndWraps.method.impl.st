@@ -1,0 +1,12 @@
+coUnit.TEST('Log_Seq_IncrementsAndWraps');
+AssertEquals_UDINT(Expected := 0, Actual := fbLog.LastSeq, Message := 'no events: seq 0');
+fbLog.AddEvent(stEvent := stEv);
+AssertEquals_UDINT(Expected := 1, Actual := fbLog.LastSeq, Message := 'first event: seq 1');
+fbLog.SetSeq(udiValue := 16#FFFFFFFE);
+fbLog.AddEvent(stEvent := stEv);
+AssertEquals_UDINT(Expected := 16#FFFFFFFF, Actual := fbLog.LastSeq, Message := 'seq 16#FFFFFFFF');
+fbLog.AddEvent(stEvent := stEv);
+AssertEquals_UDINT(Expected := 1, Actual := fbLog.LastSeq, Message := 'after 16#FFFFFFFF: seq 1');
+stEv := fbLog.GetEvent(uiBack := 0);
+AssertEquals_UDINT(Expected := 1, Actual := stEv.udiSeq, Message := 'record carries seq 1');
+coUnit.TEST_FINISHED();

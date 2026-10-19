@@ -22,44 +22,114 @@ reason = "Как для src/: значения по умолчанию типо�
 
 [[allow]]
 id = "PLCOPEN-CP9"
-file = "src/POUs/FB_Example/*"
-reason = "Сложность тела FB_Example по классической метрике — 8; iec_checker 0.4 считает её завышенно (docs/STATIC_ANALYSIS.md)"
-
-[[allow]]
-id = "PLCOPEN-CP9"
 file = "tests/*"
 reason = "Наборы тестов — последовательные вызовы без ветвлений (классическая сложность — 1); завышенный подсчёт iec_checker 0.4, метрика для тестов не показательна"
 
+# =====================================================================================================
+# Логика ПАЗ (src/POUs/Sis/, PRG_Main) и тесты, написанные вручную, и таблицы истинности —
+# раздел команды A (DESIGN.md, 13.1). Пути не пересекаются с разделом команды B ниже: каждое
+# обоснование используется ровно своими файлами. Разбор — docs/STATIC_ANALYSIS.md, раздел «Логика ПАЗ».
+# =====================================================================================================
+
 [[allow]]
-id = "PLCOPEN-L17"
-file = "src/POUs/FB_Example/FB_Example.impl.st"
-reason = "Действия «иначе» нет: в зоне гистерезиса выход сохраняет состояние, без фронта счётчик не меняется"
+id = "PLCOPEN-CP9"
+file = "src/POUs/Sis/*"
+match = "Code is too complex"
+reason = "Тела FB_Voting, FB_CauseEffect, FB_SisUnit, F_VoteEval, F_VoteCheckCfg, F_CemCheckCfg — нормативная последовательность шагов контракта (DESIGN.md 5.2, 5.5, 5.9, 6.3, 6.8, 8.1) с пронумерованными шагами; деление на методы спрятало бы порядок событий. iec_checker 0.4 считает каждое логическое выражение и каждую ветвь вложенных циклов, метрика завышена; поведение покрыто граничными тестами и исчерпывающими таблицами истинности (docs/STATIC_ANALYSIS.md)"
 
 [[allow]]
 id = "PLCOPEN-L17"
-file = "src/POUs/PRG_Main/PRG_Main.impl.st"
-reason = "Однократная команда HMI не пришла — делать нечего; пустая ветка ELSE только добавит шум"
+file = "src/POUs/Sis/*"
+reason = "IF без ELSE — у условия нет действия «иначе» (событие по смене состояния, бит ошибки конфигурации, счётчик); пустая ветвь ELSE только добавила бы шум (как в plc-process-lib)"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/Helpers/FB_SisTestLog/*"
+reason = "Поиск событий по виду: запись не того вида пропускается — действия «иначе» нет"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "tests/POUs/TruthTables/FB_VoteTableRig/*"
+reason = "Сборка байта результата по битам: бит не установлен — действия нет"
+
+[[allow]]
+id = "PLCOPEN-L17"
+file = "src/POUs/PRG_Main/*"
+reason = "Нормальные значения входов ставятся только в первом цикле демо без ввода-вывода (DESIGN.md 8.4): действия «иначе» нет"
 
 [[allow]]
 id = "UnusedVariable"
-file = "src/POUs/PRG_Main/PRG_Main.decl.st"
-match = "STCMD|STSTS"
-reason = "Ложное срабатывание iec_checker 0.4: обращения к полям структуры (stCmd.xAck, stSts.xOut) он не считает использованием"
+file = "src/POUs/Sis/*"
+match = "variable: (AFB|FB|ST|AST)[A-Z0-9]*$"
+reason = "Ложное срабатывание iec_checker 0.4: экземпляры ФБ используются вызовом (fbDisc(...), afbBypass[k](...)) и чтением выходов, структуры — обращением к полям (stCfg.eArch, stSts.xTrip), массив кольца — в методах; это он не считает использованием"
 
 [[allow]]
 id = "UnusedVariable"
-file = "tests/POUs/*_Test/*_Test.decl.st"
-match = "variable: [A-Z][A-Z0-9]*(_[A-Z0-9]+)+$"
-reason = "Артефакт понижения: константы набора (VAR CONSTANT, UPPER_SNAKE_CASE) используются в методах-тестах, которые сборка выносит в отдельные функции"
+file = "src/POUs/Sis/FB_SisEventLog/FB_SisEventLog.decl.st"
+match = "variable: (UINEXT|UIUSED|UDISEQ)$"
+reason = "Переменные журнала используются только в методах AddEvent, GetEvent, Clear и свойствах; понижение iec-checker выносит методы в отдельные функции, и в теле ФБ (оно пустое) переменные не видны"
 
 [[allow]]
 id = "UnusedVariable"
-file = "tests/POUs/FB_Example_Test/*.method.decl.st"
-match = "FBDUT"
-reason = "Ложное срабатывание iec_checker 0.4: экземпляр ФБ используется вызовом fbDut(...), чтением выходов и вызовом методов — это он не считает использованием (как stCmd/stSts в PRG_Main)"
+file = "src/POUs/Sis/F_SisCrc16Byte/F_SisCrc16Byte.decl.st"
+match = "variable: BDATA$"
+reason = "Ложное срабатывание iec_checker 0.4: bData — аргумент вложенного вызова SHL(BYTE_TO_WORD(bData), ...), такой аргумент он не считает использованием"
 
 [[allow]]
 id = "UnusedVariable"
-file = "tests/POUs/PRG_Tests/PRG_Tests.decl.st"
-match = "FBF_CLAMPTEST|FBEXAMPLETEST"
-reason = "Экземпляры наборов регистрируются в coUnit самим объявлением и используются вызовом AreAllTestsFinished()"
+file = "src/POUs/Sis/F_VoteEval/F_VoteEval.decl.st"
+match = "variable: EARCH$"
+reason = "Ложное срабатывание iec_checker 0.4: eArch передаётся в F_VoteArchChannels(eArch := eArch) и F_VoteArchRequired(eArch := eArch); присваивание формальному параметру с тем же именем он принимает за сам параметр"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Suites/*"
+match = "variable: ((FB|ST|AST|AFB)[A-Z0-9]*|U(BAD|BITS|NAN|PLUS|MINUS)|WMASK)$"
+reason = "Ложное срабатывание iec_checker 0.4: стенды и ФБ под тестом используются вызовом методов и чтением выходов (fbRig.Cycle(), fbRig.fbVote.xTrip), структуры и объединения — обращением к полям (uBad.ePolicy, uBits.rValue), wMask — аргументом SIZEOF; это он не считает использованием"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Helpers/FB_*Rig/*"
+match = "variable: ((FB|ST|AST|AX)[A-Z0-9]*|XBYPASSPERMIT|XOVERRIDEPERMIT|XRESETHW|UICAUSE|UICH|UIEFFECT)$"
+reason = "Переменные стендов используются только в их методах (Cycle, Step, Out, BypassOf, StateOf), которые понижение iec-checker выносит в функции; uiCh и uiEffect — индексы массивов, переменные индексов iec_checker 0.4 использованием не считает"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/TruthTables/*"
+match = "variable: (FB|ST)[A-Z0-9]*$"
+reason = "Сгенерированные таблицы истинности: стенд fbRig используется вызовом методов (fbRig.EvalRow(...)), переменные стенда FB_VoteTableRig — в его методах, которые понижение выносит в функции"
+
+# =====================================================================================================
+# Сгенерированный код (cemgen) и стенд FB_SisHarness — раздел команды B (DESIGN.md, 13.1).
+# Записи общего вида (экземпляры и структуры в тестах) — в разделах выше; здесь — только файлы
+# src/**/Generated/, tests/**/Generated/ и tests/POUs/Helpers/FB_SisHarness/.
+# =====================================================================================================
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Generated/FB_CemGen*_Test/FB_CemGen*_Test.decl.st"
+match = "variable: FBH[0-9]+$"
+reason = "Экземпляры стенда FB_SisHarness (по одному на тест) используются в методах-тестах; понижение iec-checker выносит методы в отдельные функции, и в теле набора экземпляр не виден"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Helpers/FB_SisHarness/FB_SisHarness.decl.st"
+match = "variable: (STIO|STCMD|FBTIME|FBLOG|FBAPP|UDIMARK|RUN_MAX_ITERATIONS)$"
+reason = "Переменные стенда используются только в его методах (Cycle, Run, Arm, MarkEvents, HasEvent), которые понижение выносит в функции; stIo и stCmd пишут тесты по имени экземпляра"
+
+[[allow]]
+id = "UnusedVariable"
+file = "tests/POUs/Generated/FB_VoteTruth_Test/*.method.decl.st"
+match = "variable: (FBVOTE|STRES|STSTS|STIN|STCMD|UIROW)$"
+reason = "Ложное срабатывание iec_checker 0.4: вызов экземпляра fbVote(...) с чтением выходов, обращения к полям структур (stRes.xTrip, stIn.axDi[k]) и аргументы вложенных вызовов (SHR(uiRow, ...), UINT_TO_STRING(uiRow)) он не считает использованием"
+
+[[allow]]
+id = "UnusedVariable"
+file = "src/POUs/Generated/*.decl.st"
+match = "variable: (STIO|FBUNIT)$"
+reason = "Ложное срабатывание iec_checker 0.4: VAR_IN_OUT stIo используется обращениями к полям (stIo.rPT101A_mA), экземпляр fbUnit — вызовом и чтением выходов"
+
+[[allow]]
+id = "PLCOPEN-CP9"
+file = "src/POUs/Generated/*"
+reason = "Сгенерированные привязка FB_SisApp и F_SisIoNormal — линейная последовательность присваиваний без ветвлений (классическая сложность 1); число операторов растёт с числом каналов матрицы"

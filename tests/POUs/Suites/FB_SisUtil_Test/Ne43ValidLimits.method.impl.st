@@ -1,0 +1,10 @@
+coUnit.TEST('Sis_Ne43Valid_Limits');
+AssertFalse(Condition := F_SisNe43Valid(rIn_mA := 3.6), Message := '3.6 mA: invalid (wire break)');
+AssertTrue(Condition := F_SisNe43Valid(rIn_mA := 3.61), Message := '3.61 mA: valid');
+AssertTrue(Condition := F_SisNe43Valid(rIn_mA := 12.0), Message := '12 mA: valid');
+AssertTrue(Condition := F_SisNe43Valid(rIn_mA := 20.99), Message := '20.99 mA: valid');
+AssertFalse(Condition := F_SisNe43Valid(rIn_mA := 21.0), Message := '21.0 mA: invalid (short circuit)');
+AssertFalse(Condition := F_SisNe43Valid(rIn_mA := 0.0), Message := '0 mA: invalid');
+uBits.dwValue := 16#7FC00000;
+AssertFalse(Condition := F_SisNe43Valid(rIn_mA := uBits.rValue), Message := 'NaN: invalid');
+coUnit.TEST_FINISHED();

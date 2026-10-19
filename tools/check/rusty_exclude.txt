@@ -2,3 +2,47 @@
 # Формат: <Имя>.st  # причина (обязательно). Пустые строки и строки с '#' в начале пропускаются.
 # Пример:
 #   FB_ModbusMaster.st  # использует SysCom (CAA), объявлений для RuSTy нет
+
+# --- Логика ПАЗ и тесты, написанные вручную, таблицы истинности — раздел команды A (DESIGN.md, 13.1) ---
+# RuSTy проверяет то, что не зависит от plc-process-lib: типы, GVL_Const, I_SisEventSink, F_VoteEval и
+# функции схем, функции битов и CRC, F_CemCheckCfg, F_SisLogEvent, FB_SisEventLog и их тесты. Остальное
+# использует пространство PL (или экземпляры таких ФБ) и компилируется только в CODESYS (cds.py check --tests).
+FB_Voting.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8); кроме того, WORD_TO_REAL нет в stdlib RuSTy 1.0.6 и в прокладках шаблона
+FB_CauseEffect.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8); кроме того, WORD_TO_REAL нет в stdlib RuSTy 1.0.6 и в прокладках шаблона
+FB_SisUnit.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8)
+F_VoteCheckCfg.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8)
+F_SisNe43Valid.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8)
+F_SisAiToEu.st  # использует plc-process-lib (PL.FB_Delay, PL.I_TimeSource, PL.F_IsFinite, PL.GVL_Const): объявлений библиотеки для RuSTy нет (DESIGN.md, 12.8)
+PRG_Main.st  # вызывает PRG_Sis и пишет GVL_SisIo.stIo через F_SisIoNormal (PRG_Sis и GVL_Sis исключены ниже)
+FB_VotingRig.st  # объявляет PL.FB_FakeTime и экземпляр FB_Voting (исключён)
+FB_CemRig.st  # объявляет PL.FB_FakeTime и экземпляр FB_CauseEffect (исключён)
+FB_UnitRig.st  # объявляет PL.FB_FakeTime и экземпляр FB_SisUnit (исключён)
+FB_VoteTableRig.st  # объявляет PL.FB_FakeTime и экземпляр FB_Voting (исключён)
+FB_Voting_Test.st  # PL.U_RealBits (NaN, ±Inf) и стенд FB_VotingRig (исключён)
+FB_SisUtil_Test.st  # PL.U_RealBits (NaN) и F_SisNe43Valid, F_SisAiToEu (исключены)
+FB_CauseEffect_Test.st  # стенд FB_CemRig и FB_CauseEffect (исключены)
+FB_Common_Test.st  # экземпляры FB_Voting и FB_CauseEffect (исключены)
+FB_SisUnit_Test.st  # стенд FB_UnitRig (исключён)
+FB_VoteTableEval_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTableFbSmall_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3VTDI_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3VTAI_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3DSDI_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3DSAI_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3DADI_Test.st  # стенд FB_VoteTableRig (исключён)
+FB_VoteTable2oo3DAAI_Test.st  # стенд FB_VoteTableRig (исключён)
+GVL_TestsSis.st  # экземпляры наборов, исключённых выше
+GVL_TestsTruthTables.st  # экземпляры наборов, исключённых выше
+
+# --- Сгенерированный код (cemgen) и стенд FB_SisHarness — раздел команды B (DESIGN.md, 13.1) ---
+# Без объявлений plc-process-lib (пространство PL) RuSTy не разрешает PL.* (контракт, 12.8). С локальной
+# прокладкой PL (I_TimeSource, FB_SystemTime, FB_FakeTime, FB_Delay, F_IsFinite, константы NE 43) и
+# --strip-namespace PL эти файлы проходят plc --check, кроме FB_SisApp.st (см. ниже).
+GVL_Sis.st  # объявляет PL.FB_SystemTime
+FB_SisApp.st  # PL.I_TimeSource; GVL_SisCfg.CEM_CFG и VOTE_CFG (константы) во VAR_IN_OUT CONSTANT FB_SisUnit — после замены R13 это VAR_IN_OUT, RuSTy даёт E031
+PRG_Sis.st  # вызывает GVL_Sis.fbApp (GVL_Sis исключён)
+FB_SisHarness.st  # объявляет PL.FB_FakeTime
+FB_VoteTruth_Test.st  # тесты уровня 2 объявляют PL.FB_FakeTime
+FB_CemGen01_Test.st  # экземпляры FB_SisHarness (исключён)
+FB_CemGen02_Test.st  # экземпляры FB_SisHarness (исключён)
+GVL_TestsGenerated.st  # экземпляры FB_VoteTruth_Test и FB_CemGenNN_Test (исключены)
