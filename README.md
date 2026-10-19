@@ -66,12 +66,12 @@ Win V3, coUnit 1.2.0.0. Картинки документов — снимки �
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/shot-cause-effect-matrix-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/media/shot-cause-effect-matrix-light.png">
-    <img alt="Лист матрицы причин и следствий сепаратора V-101: 10 причин с каналами, схемами голосования, уставками, задержками и обходами, 7 следствий, 49 связей «X», CRC 16#CD40" src="docs/media/shot-cause-effect-matrix-light.png" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/shot-cause-effect-compact-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/shot-cause-effect-compact-light.png">
+    <img alt="Матрица причин и следствий сепаратора V-101: 10 причин с тегами, схемами голосования, уставками и задержками, 7 следствий с безопасным состоянием, 49 связей «X», маски wCauseMask, CRC 16#CD40" src="docs/media/shot-cause-effect-compact-light.png" width="100%">
   </picture>
 </p>
-<p align="center"><sub>Снимок сгенерированного <a href="docs/cause_effect_matrix.html">docs/cause_effect_matrix.html</a> (cemgen 0.1.0, ревизия B, печать на A3)</sub></p>
+<p align="center"><sub>Снимок сгенерированного <a href="docs/cause_effect_matrix.html">docs/cause_effect_matrix.html</a> (cemgen 0.1.0, ревизия B) в компактном виде для этой страницы: без столбцов «Каналы», «Байпас», «Пусковой обход» и «Σ». Лист A3 целиком: <a href="docs/media/shot-cause-effect-matrix-dark.png">тёмный</a>, <a href="docs/media/shot-cause-effect-matrix-light.png">светлый</a></sub></p>
 
 **Голосование при отказах** — как 2oo3 деградирует при каждой политике; эти таблицы целиком
 проверяются тестами на настоящих `F_VoteEval` и `FB_Voting`:
