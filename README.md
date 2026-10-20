@@ -18,12 +18,14 @@
 
 <p align="center"><a href="#что-это-и-зачем">Что это</a> · <a href="#как-это-выглядит">Как выглядит</a> · <a href="#быстрый-старт">Быстрый старт</a> · <a href="#как-использовать-в-своём-проекте">Работа с матрицей</a> · <a href="#как-устроено">Как устроено</a> · <a href="#документация">Документация</a> · <a href="#summary-en">Summary (EN)</a></p>
 
-**Логика ПАЗ на ST для CODESYS V3.5 и генератор `cemgen`: из одной матрицы причин и следствий
-(CSV или XLSX) — конфигурация ПЛК, тесты, лист матрицы и протокол испытаний в стиле FAT.** Обычно
+**Логика ПАЗ на ST для ПЛК на CODESYS V3.5 — ОВЕН ПЛК210 (SP17 Patch 3) и REGUL R500 (Astra.IDE) — и
+генератор `cemgen`: из одной матрицы причин и следствий (CSV или XLSX) — конфигурация ПЛК, тесты, лист матрицы
+и протокол испытаний в стиле FAT.** Обычно
 матрица живёт в Excel, а код ПЛК, тесты и протокол FAT пишут по ней вручную: после каждой ревизии
 они расходятся, и сверяют их глазами. Здесь всё это генерируется из матрицы, ожидаемые значения
 тестов даёт независимая эталонная модель, а CI падает при любом расхождении. Для инженеров ПАЗ и
-АСУ ТП и техлидов у интеграторов и машиностроителей. Демонстрация подхода, не SIL-система.
+АСУ ТП и техлидов у интеграторов на ОВЕН и REGUL: в Astra.IDE для юнит-тестов есть только `PsUnittest` с записью
+«прошёл/не прошёл» в журнал, Test Manager CODESYS из России недоступен. Демонстрация подхода, не SIL-система.
 
 ## Что это и зачем
 
@@ -54,7 +56,10 @@ Python: проверяет матрицу и строит из неё всё, ч
   автотесты.
 - Безопасное поведение по умолчанию: обесточивание на срабатывание; старт ПЛК, ошибка конфигурации
   или CRC — срабатывание, обрыв канала 4–20 мА — деградация по политике, а не «норма».
-- Проверено в CODESYS 3.5.17.30: 255 тестов coUnit в программном ПЛК CODESYS Control Win V3.
+- Проверено в CODESYS 3.5.17.30: 255 тестов coUnit в программном ПЛК CODESYS Control Win V3. Те же исходники
+  20.10.2026 собраны на целевых ПЛК: ОВЕН ПЛК210 (пакет OwenTargets 3.5.17.36) — сборка 0 ошибок,
+  0 предупреждений, полная проверка 81 объекта `src/` и `tests/` без ошибок; REGUL R500 61 в Astra.IDE 1.7.2.2 —
+  сборка 0/0, проверка 50 объектов `src/` без ошибок. В ПЛК не загружалось.
 
 **Для кого.** Инженеры ПАЗ и АСУ ТП, техлиды у интеграторов, машиностроителей и вендоров ПЛК —
 как пример того, как связать матрицу причин и следствий с кодом, тестами и протоколом испытаний и
@@ -258,7 +263,7 @@ AssertEquals_UINT(Expected := GVL_SisCfg.CAUSE_PSHH101, Actual := fbH001.fbApp.s
    python -m pytest
    ```
 
-   Увидите: `853 passed, 11 skipped` примерно за минуту. Пропущены интеграционные тесты, которым
+   Увидите: `855 passed, 11 skipped` примерно за минуту. Пропущены интеграционные тесты, которым
    нужны iec_checker и RuSTy (10 тестов; где взять — ниже, в «Проверках разработчика») и пакет
    iolistgen (1 тест: установленный или клон рядом, `../iolistgen`; iolistgen готовится к
    публикации).
@@ -590,7 +595,8 @@ trip delays, de-energise-to-trip outputs, first-out, auto-clearing startup overr
 The Python CLI `cemgen` turns one CSV/XLSX matrix into the PLC configuration, coUnit tests with
 expectations from an independent reference model, the matrix sheet, a FAT-style protocol and report and
 the SIF section of a demo SRS; CI fails on any drift. 255 tests pass in CODESYS 3.5.17.30 / Control Win
-V3. For SIS and PLC engineers at integrators and machine builders. Docs are in Russian.
+V3; the sources also build with 0 errors for OWEN PLC210 and REGUL R500 61 (Astra.IDE), not run on hardware.
+For SIS and PLC engineers at integrators working with OWEN and REGUL PLCs. Docs are in Russian.
 
 ## Лицензия
 
@@ -598,9 +604,9 @@ V3. For SIS and PLC engineers at integrators and machine builders. Docs are in R
 
 ---
 
-<p align="center"><b>Портфолио АСУ ТП</b></p>
+<p align="center"><b>Портфолио АСУ ТП</b> · <sub>инструменты и практики для ПЛК ОВЕН и REGUL</sub></p>
 <table>
-<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка проекта скриптом, CI</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><a href="https://github.com/kr0nsch/kns-pump-station">03 · kns-pump-station</a><br><sub>флагман: КНС, три насоса с ПЧ, модель, ПМИ</sub></td></tr>
-<tr><td width="33%"><a href="https://github.com/kr0nsch/kns-port-domestic">04 · kns-port-domestic</a><br><sub>перенос на Astra.IDE / MasterSCADA 4D</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-iiot-stack">05 · plc-iiot-stack</a><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/kr0nsch/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/plc-repo-template">01 · plc-repo-template</a><br><sub>ST в git, сборка для ПЛК210 и R500, CI</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-process-lib">02 · plc-process-lib</a><br><sub>ФБ: AI, двигатель, ПЧ, задвижка, ПИД, тревоги</sub></td><td width="33%"><a href="https://github.com/kr0nsch/kns-pump-station">03 · kns-pump-station</a><br><sub>флагман: КНС, ПМИ на модели, сборка ПЛК210</sub></td></tr>
+<tr><td width="33%"><a href="https://github.com/kr0nsch/kns-port-domestic">04 · kns-port-domestic</a><br><sub>перенос КНС на REGUL R500 (Astra.IDE)</sub></td><td width="33%"><a href="https://github.com/kr0nsch/plc-iiot-stack">05 · plc-iiot-stack</a><br><sub>OPC UA / MQTT → InfluxDB → Grafana</sub></td><td width="33%"><a href="https://github.com/kr0nsch/iolistgen">06 · iolistgen</a><br><sub>перечень сигналов → ST, карты Modbus, SCADA</sub></td></tr>
 <tr><td width="33%"><a href="https://github.com/kr0nsch/plc-ci-toolkit">07 · plc-ci-toolkit</a><br><sub>линтеры, сборка CODESYS, тесты, JUnit</sub></td><td width="33%"><a href="https://github.com/kr0nsch/s7-to-codesys">08 · s7-to-codesys</a><br><sub>конвертер SCL → ST с отчётом о переносе</sub></td><td width="33%"><a href="https://github.com/kr0nsch/sis-interlock-demo"><b>09 · sis-interlock-demo</b></a><br><sub>ПАЗ: MooN, матрица причин и следствий</sub></td></tr>
 </table>
